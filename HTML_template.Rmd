@@ -23,33 +23,33 @@ table
 <div align="center">
 This is an R HTML document. When you click the <b>Knit HTML</b> button a web page will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</div>
 <div align="center", style="color:#000000">
-<!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
+```{r out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE}
 library(xtable)
 data(tli)
 tli.table <- xtable(tli[1:10,])
 digits(tli.table)[c(2,6)] <- 0
-end.rcode-->
+```
 
-<!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+```{r out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'}
 print(tli.table, include.rownames=F, type="html")
-end.rcode-->
+```
 </div>
 <div align="center">
 <p>You can also embed plots, for example:</p>
 <h2>CRT Results</h2>
 </div>
 <div align="center">
-<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
+```{r fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE}
 if(nrow(statescore.graph) > 0) plot(statescore.plot) else print("No grades were tested for the 2012-13 Academic Year")
-end.rcode-->
+```
 </div>
 <div align="center">
 <h2>MAP Results GO.</h2>
 </div>
 <div align="center">
-<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
+```{r fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE}
 if(nrow(quartile.graph) > 0) plot(quartile.plot) else print("No grades were tested for the 2012-13 Academic Year")
-end.rcode-->
+```
 </div>
 </body>
 </html>

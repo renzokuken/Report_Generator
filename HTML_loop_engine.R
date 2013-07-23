@@ -5,7 +5,7 @@ pulldata <- 1
 
 formatdata <- 1
 
-publishdata_html <- 0
+publishdata_html <- 1
 
 publishdata_png <- 0
 
@@ -17,6 +17,7 @@ library(ggplot2)
 library(scales)
 library(grid)
 library(plyr)
+library(knitr)
 
 #pull full list of schools
 s <- odbcConnect("Schools_prod")
@@ -30,13 +31,10 @@ school.query <- ("SELECT
             ")
 
 school.list <- sqlQuery(s, school.query, stringsAsFactors=FALSE)
-odbcCloseAll()
 
 #clean up school names
 school.list$Display_Name <- gsub(":","",school.list$Display_Name)
 school.list$Display_Name <- gsub(",","",school.list$Display_Name)
-school.list$Display_Name <- gsub("'","",school.list$Display_Name)
-school.list$Display_Name <- gsub(".","",school.list$Display_Name)
 school.list$Display_Name <- gsub(" ","_",school.list$Display_Name)
 
 while(pulldata == 1) {
@@ -99,6 +97,7 @@ while(pulldata == 1) {
 
   odbcClose(rc)
   odbcClose(ss)
+  odbcClose(s)
   
 dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
@@ -112,7 +111,7 @@ dget(paste(data.path,"quartile.raw.Rda", sep=""))
 dget(paste(data.path,"statescore.raw.Rda", sep=""))
 dget(paste(data.path,"demographics.raw.Rda", sep=""))
 
-#format quartile data
+###########################################format quartile data######################################
 quartile.mod <- quartile.raw
 
 #set graph values for percent_in_quartile
@@ -137,7 +136,7 @@ quartile.mod$Graph_Label <- reorder(quartile.mod$Graph_Label,quartile.mod$sequen
 #generate labels for graph
 quartile.mod$label <- abs(quartile.mod$percent_at_quartile)
 
-#format statescore data
+#############################################format statescore data####################################################
 statescore.mod <- statescore.raw
 #transform from wide to long
 statescore.mod <- reshape(statescore.mod,
@@ -167,25 +166,98 @@ demographics.mod <- demographics.raw
 
 dput(quartile.mod, paste(data.path, "quartile.mod.RDa", sep=""))
 dput(statescore.mod, paste(data.path,"statescore.mod.RDa", sep =""))
-dput(demographics.mod, paste(data.path,"statescore.mod.RDa", sep=""))
+dput(demographics.mod, paste(data.path,"demographics.mod.RDa", sep=""))
 break
 }
 
+#########################################Generate HTML reports :D###################################
+while(publishdata_html == 1) {  
 
-while(publishdata_html == 1) {
-#x <- c(5, 3)
-for(s in school_list$School_ID){
-  #for(s in x){
-  n <- school_list[school_list$School_ID == s,]
+#get data
+dget(paste(data.path,"quartile.mod.Rda", sep=""))
+dget(paste(data.path,"statescore.mod.Rda", sep=""))
+dget(paste(data.path,"demographics.mod.Rda", sep=""))
+
+#set color palettes
+quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6") 
+statescore.palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "#B9B9B9")
+  
+x <- c(5, 3, 105, 138)
+#for(s in school_list$School_ID){
+for(s in x){
+  n <- school.list[school.list$School_ID == s,]
   n <- n$Display_Name
   
   print(s)
   print(n)
   
-  source("loop_quartile_graph.R")
-  #ggsave(paste(s,"_",n,"_quartile.png", sep=""), width=12, height=12)
-  #dev.off()
+#############################################set quartile plot#######################################
+#calculates vertical position for bar labels
+quartile.graph <- subset(quartile.mod, School_ID == s)
 
+#calculate label placement for stacked bars
+  quartile.graph <- ddply(quartile.graph, .(Graph_Label, Sub_Test_Name), transform, pos = (((cumsum(label)) - 0.5*label)))
+  quartile.graph <- ddply(quartile.graph, .(Graph_Label, Sub_Test_Name), transform, neg = sum(ifelse(order %in% c(1,2), label, 0)))
+  quartile.graph$pos <- (quartile.graph$pos - quartile.graph$neg)
+
+#calculates bar spacing
+#max <- 6 #NOTE TO SELF: find a way to make this dynamic...
+#bar <- nrow(e) / 8
+#max <- ((max * 2) - 1)
+#gap <- (1 / ((max - bar) / 2))
+
+#separate positive and negative values for stacked bars
+q1 <- subset(quartile.graph, quartile %in% c("Percent_Below_25_NPR", "Percent_At_25_Below_50_NPR"))
+q2 <- subset(quartile.graph, quartile %in% c("Percent_At_50_Below_75_NPR", "Percent_At_Above_75_NPR"))
+
+q1$quartile <- q1$quartile <- gsub("_"," ", q1$quartile)
+q2$quartile <- q2$quartile <- gsub("_"," ", q2$quartile)
+
+q1$quartile <- factor(q1$quartile,levels = rev(q1$quartile[order(q1$order)]),ordered = TRUE)
+q2$quartile <- factor(q2$quartile,levels = rev(q2$quartile[order(q2$order)]),ordered = TRUE)
+
+#plot graph
+quartile.plot <- ggplot(quartile.graph)
+quartile.plot <- quartile.plot + geom_bar(data = q1, aes(x=Graph_Label, y=percent_at_quartile, fill=quartile, order=order), stat="identity", width=0.5)
+quartile.plot <- quartile.plot + geom_bar(data = q2, aes(x=Graph_Label, y=percent_at_quartile, fill=quartile, order=order), stat="identity", width=0.5)
+quartile.plot <- quartile.plot + scale_fill_manual(values = quartile.palette, breaks = c("Percent At Above 75 NPR","Percent At 50 Below 75 NPR","Percent At 25 Below 50 NPR","Percent Below 25 NPR"))
+quartile.plot <- quartile.plot + facet_grid(~ Sub_Test_Name)
+quartile.plot <- quartile.plot + xlab('Season')
+quartile.plot <- quartile.plot + theme(axis.title.x = element_text(size = rel(1.8)), axis.text.x  = element_text(size = rel(1.8), angle=45), strip.text.x = element_text(size = rel(2.5), face='bold'))
+quartile.plot <- quartile.plot + ylab('Quartile Distribution')
+quartile.plot <- quartile.plot + theme(axis.title.y = element_text(size = rel(1.8)), axis.text.y  = element_text(size = rel(1.8)), strip.text.y = element_text(size = rel(2.5), face='bold'))
+quartile.plot <- quartile.plot + geom_text(aes(x=Graph_Label, y=pos, label = label), size = 8)
+quartile.plot <- quartile.plot + theme(axis.text.y=element_blank(), panel.grid.major = element_blank(), plot.background = element_blank(), panel.background = element_blank(), panel.grid.minor = element_blank())
+ 
+#################################set state score plot################################################
+  statescore.graph <- subset(statescore.mod, School_ID == s)
+  statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, label = sum(score))
+  statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, pos = (cumsum(score) + 15))
+  
+  statescore.graph$label <- ifelse(statescore.graph$Score_Grouping_Cat_ID == 2, "", statescore.graph$label)
+  
+  statescore.plot <- ggplot(statescore.graph, aes(x=reorder(score_level, order), y=score, fill=score_stack))
+  statescore.plot <- statescore.plot + geom_bar(stat="identity", width=1, order=order)
+  statescore.plot <- statescore.plot + scale_fill_manual(values = statescore.palette, breaks = c("School Percent Advanced", "School Percent Proficient", "District Percent Advanced", "District Percent Proficient", "State Percent Advanced", "State Percent Proficient"))
+  statescore.plot <- statescore.plot + facet_grid(Subtest_Name ~ Grade)
+  statescore.plot <- statescore.plot + coord_equal(ratio = 0.07)
+  statescore.plot <- statescore.plot + theme(panel.margin = unit(0.7, "cm"))
+  statescore.plot <- statescore.plot + theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(face='bold'))
+  statescore.plot <- statescore.plot + theme(strip.text.y = element_text(angle = 45), strip.background = element_blank())
+  statescore.plot <- statescore.plot + xlab('Grade')
+  statescore.plot <- statescore.plot + theme(axis.title.x = element_text(size = rel(1.8)), axis.text.x  = element_blank(), strip.text.x = element_text(size = rel(2.5)))
+  statescore.plot <- statescore.plot + ylab('Percent at Level')
+  statescore.plot <- statescore.plot + scale_y_continuous(limits = c(0, 120))
+  statescore.plot <- statescore.plot + theme(axis.title.y = element_text(size = rel(1.8)), axis.text.y  = element_text(size = rel(0.8)), strip.text.y = element_text(size = rel(1.2), angle = 45, face='bold'), strip.background = element_blank())
+  statescore.plot <- statescore.plot + theme(axis.text.y=element_blank(), plot.background = element_blank(), panel.background=element_blank() , panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 6.8)
+  statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
+  
+#####################################Knit to HTML Template###########################################
+
+knit2html("HTML_template.Rhtml")
+  
+file.rename(from="HTML_template.html",to=paste(report.path,n,"_HTML_Template.html", sep=""))
 }
 break
 }
