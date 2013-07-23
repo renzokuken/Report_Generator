@@ -1,0 +1,268 @@
+<html>
+<style>
+table
+{
+  border-collapse: separate;
+  border-spacing: 1em 0.5em;
+  background-color: #ddd;
+  color: #000;
+}
+</style>
+<div align="center">
+<h1>Proof of Concept</h1>
+</div>
+<div align="center">
+<strong>Let's see if the strong text works...</strong><br />
+<br />
+<em>next the slanty text...</em>
+</div>
+<div align="center">
+<h2>CRT Results</h2>
+</div>
+
+<div align="center">
+This is an R HTML document. When you click the <b>Knit HTML</b> button a web page will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</div>
+<div align="center", style="color:#FF00FF">
+<!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
+library(xtable)
+data(tli)
+tli.table <- xtable(tli[1:10,])
+digits(tli.table)[c(2,6)] <- 0
+end.rcode-->
+
+<!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+print(tli.table, include.rownames=F, type="html")
+end.rcode-->
+
+</div>
+<div align="center">
+<!--begin.rcode out.width = 7, out.height= 7, warning=FALSE, message=FALSE, echo=FALSE
+rm(list=ls())
+
+pulldata <- 1
+
+formatdata <- 1
+
+graphdata <- 1
+
+library(RODBC)
+library(ggplot2)
+library(scales)
+library(grid)
+library(plyr)
+
+while(pulldata == 1) {
+x <- odbcConnect('State_Scores_prod')
+
+state_score_query <- ("SELECT
+             State_Score_Header_ID
+            ,State_ID
+            ,AC_Year
+            ,Grade
+            ,School_ID
+            ,Subtest_ID
+            ,Subtest_Name
+            ,Subtest_Cat_RC_ID
+            ,Score_Grouping_Name
+            ,Score_Grouping_Cat_ID
+            ,State_Num_Tested
+            ,State_Score_Percent
+            ,District_Num_Tested
+            ,District_Score_Percent
+            ,School_Num_Tested
+            ,School_Score_Percent
+            FROM State_Scores.dbo.v_All_Scores
+            WHERE AC_Year = 2012
+            AND Score_Grouping_Cat_ID IN (2,3)
+            ")
+
+state_scores <- sqlQuery(x, state_score_query, stringsAsFactors=FALSE)
+
+odbcClose(x)
+break
+}
+
+while(formatdata == 1) {
+  
+state_scores_long <- reshape(state_scores,
+                             varying = c("State_Score_Percent", "District_Score_Percent", "School_Score_Percent"),
+                             v.names = "score",
+                             timevar = "score_level",
+                             times = c("State_Score_Percent", "District_Score_Percent", "School_Score_Percent"),
+                             new.row.names = 1:5000,
+                             direction = "long")
+
+state_scores_long$order <- (ifelse(state_scores_long$score_level == "School_Score_Percent", 1, ifelse(state_scores_long$score_level == "District_Score_Percent", 2, 3)))
+#set ordering for graphs
+state_scores_long$order <- as.integer(paste(state_scores_long$order, state_scores_long$Score_Grouping_Cat_ID, sep=""))
+#set labels for buckets
+state_scores_long$score_stack <- paste(state_scores_long$score_level, state_scores_long$Score_Grouping_Name, sep= "_")
+#replace underscores
+state_scores_long$score_stack <- gsub("_"," ", state_scores_long$score_stack)
+#remove "score" because it looks stupid :/
+state_scores_long$score_stack <- gsub(" Score ", " ", state_scores_long$score_stack)
+#cut trailing spaces
+state_scores_long$Subtest_Name <- gsub("[[:space:]]*$","", state_scores_long$Subtest_Name)
+#round floating point scores
+state_scores_long$score <- round(state_scores_long$score, 0)
+
+break
+}
+
+while(graphdata == 1) {
+palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "#B9B9B9")
+
+#s <- factor(state_scores_long$School_ID)
+d <-subset(state_scores_long, School_ID == 5 | School_ID == 15 | School_ID == 38, drop = TRUE)
+#d <-subset(state_scores_long, School_ID == 5)
+school <- factor(d$School_ID)
+school <- levels(school)
+
+for(s in school) {
+
+e <- subset(state_scores_long, School_ID == s)
+e <- ddply(e, .(Grade, Subtest_Name, score_level), transform, label = sum(score))
+e <- ddply(e, .(Grade, Subtest_Name, score_level), transform, pos = (cumsum(score) + 15))
+
+e$label <- ifelse(e$Score_Grouping_Cat_ID == 2, "", e$label)
+
+b <- ggplot(e, aes(x=reorder(score_level, order), y=score, fill=score_stack))
+b <- b + geom_bar(stat="identity", width=1, order=order)
+b <- b + scale_fill_manual(values = palette, breaks = c("School Percent Advanced", "School Percent Proficient", "District Percent Advanced", "District Percent Proficient", "State Percent Advanced", "State Percent Proficient"))
+b <- b + facet_grid(Subtest_Name ~ Grade)
+b <- b + coord_equal(ratio = 0.07)
+b <- b + theme(panel.margin = unit(0.7, "cm"))
+b <- b + theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(face='bold'))
+b <- b + theme(strip.text.y = element_text(angle = 45), strip.background = element_blank())
+b <- b + xlab('Grade')
+b <- b + theme(axis.title.x = element_text(size = rel(1.8)), axis.text.x  = element_blank(), strip.text.x = element_text(size = rel(2.5)))
+b <- b + ylab('Percent at Level')
+b <- b + scale_y_continuous(limits = c(0, 120))
+b <- b + theme(axis.title.y = element_text(size = rel(1.8)), axis.text.y  = element_text(size = rel(0.8)), strip.text.y = element_text(size = rel(1.2), angle = 45, face='bold'), strip.background = element_blank())
+b <- b + theme(axis.text.y=element_blank(), plot.background = element_blank(), panel.background=element_blank() , panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+b <- b + geom_text(aes(label = label, y = pos), size = 6.8)
+b <- b + guides(fill = guide_legend(nrow = 2))
+print(b)
+#ggsave("export_test.pdf",height=25, width=16.26, dpi=4800)
+}
+break
+}
+end.rcode-->
+</div>
+<p>You can also embed plots, for example:</p>
+<div align="center">
+<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
+plot(b)
+end.rcode-->
+</div>
+<div align="center">
+<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
+rm(list=ls())
+
+pulldata <- 1
+
+formatdata <- 1
+
+graphdata <- 1
+
+library(RODBC)
+library(ggplot2)
+library(scales)
+library(plyr)
+
+while(pulldata == 1) {
+  x <- odbcConnect('Report_Card_prod')
+  
+  quartile_query <- ("SELECT
+                        *
+                        FROM v_School_Quartile_current_2012
+                        ")
+  
+quartile <- sqlQuery(x, quartile_query, stringsAsFactors=FALSE)
+  
+odbcClose(x)
+break
+}
+
+
+while(formatdata == 1) {
+
+#set graph values for percent_in_quartile
+quartile$Percent_Below_25_NPR <- (quartile$Percent_Below_25_NPR * -1)
+quartile$Percent_At_25_Below_50_NPR <- (quartile$Percent_At_25_Below_50_NPR * -1)
+
+#reshape data wide to long
+quartile <- reshape(quartile,
+        varying = c("Percent_Below_25_NPR", "Percent_At_25_Below_50_NPR", "Percent_At_50_Below_75_NPR", "Percent_At_Above_75_NPR"),
+        v.names = "percent_at_quartile",
+        timevar = "quartile",
+        times = c("Percent_Below_25_NPR", "Percent_At_25_Below_50_NPR", "Percent_At_50_Below_75_NPR", "Percent_At_Above_75_NPR"),
+        new.row.names = 1:5000,
+        direction = "long")
+
+#generate order for bar stacking
+quartile$order <- ifelse(quartile$quartile == "Percent_At_Above_75_NPR", 4, ifelse(quartile$quartile == "Percent_At_50_Below_75_NPR", 3, ifelse(quartile$quartile == "Percent_At_25_Below_50_NPR",1, 2)))
+
+
+#generate order for bar stacking
+quartile$order <- ifelse(quartile$quartile == "Percent_At_Above_75_NPR", 4, ifelse(quartile$quartile == "Percent_At_50_Below_75_NPR", 3, ifelse(quartile$quartile == "Percent_At_25_Below_50_NPR",1, 2)))
+#generate labels for graph
+quartile$label <- abs(quartile$percent_at_quartile)
+
+break
+}
+
+while(graphdata == 1) {
+
+#set color palette
+palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6")
+
+#subset data for PoC...
+d <-subset(quartile, School_ID == 5, drop = TRUE)
+school <- factor(d$School_ID)
+school <- levels(school)
+
+for(s in school){
+
+#calculates vertical position for bar labels
+e <- subset(quartile, School_ID == s)
+
+#calculate label placement for stacked bars
+e <- ddply(e, .(Graph_Label, Sub_Test_Name), transform, pos = (((cumsum(label)) - 0.5*label)))
+e <- ddply(e, .(Graph_Label, Sub_Test_Name), transform, neg = sum(ifelse(order %in% c(1,2), label, 0)))
+e$pos <- (e$pos - e$neg)
+
+#calculates bar spacing
+#max <- 6 #NOTE TO SELF: find a way to make this dynamic...
+#bar <- nrow(e) / 8
+#max <- ((max * 2) - 1)
+#gap <- (1 / ((max - bar) / 2))
+
+#separate positive and negative values for stacked bars
+e1 <- subset(e, quartile %in% c("Percent_Below_25_NPR", "Percent_At_25_Below_50_NPR"))
+e2 <- subset(e, quartile %in% c("Percent_At_50_Below_75_NPR", "Percent_At_Above_75_NPR"))
+
+#plot graph
+q <- ggplot(e)
+q <- q + geom_bar(data = e1, aes(x=Graph_Label, y=percent_at_quartile, fill=quartile, order=order), stat="identity", width=0.8)
+q <- q + geom_bar(data = e2, aes(x=Graph_Label, y=percent_at_quartile, fill=quartile, order=order), stat="identity", width=0.8)
+q <- q + scale_fill_manual(values = palette)
+q <- q + facet_grid(~ Sub_Test_Name)
+q <- q + xlab('Season')
+q <- q + theme(axis.title.x = element_text(size = rel(1.8)), axis.text.x  = element_text(size = rel(1.8)), strip.text.x = element_text(size = rel(2.5), face='bold'))
+q <- q + ylab('Quartile Distribution')
+q <- q + theme(axis.title.y = element_text(size = rel(1.8)), axis.text.y  = element_text(size = rel(1.8)), strip.text.y = element_text(size = rel(2.5), face='bold'))
+q <- q + geom_text(aes(x=Graph_Label, y=pos, label = label), size = 8)
+q <- q + theme(axis.text.y=element_blank(), panel.grid.major = element_blank(), plot.background = element_blank(), panel.background = element_blank(), panel.grid.minor = element_blank())
+}
+break
+}
+end.rcode-->
+</div>
+<div align="center">
+<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
+plot(q)
+end.rcode-->
+</div>
+</body>
+</html>
