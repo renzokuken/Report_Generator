@@ -7,20 +7,30 @@ table
   background-color: #ddd;
   color: #000;
 }
+#container {
+  display: table;
+  }
+#row {
+  display: table-row;
+}
+#left, #right, #middle {
+  display: table-cell;
+}
 </style>
-<div align="center">
+<div id="container">
+<div id="row>
 <h1>Proof of Concept</h1>
 </div>
-<div align="center">
+<div id="row">
 <strong>Let's see if the strong text works...</strong><br />
 <br />
 <em>next the slanty text...</em>
 </div>
-<div align="center">
+<div id="row">
 
 </div>
 
-<div align="center">
+<div id="row">
 This is an R HTML document. When you click the <b>Knit HTML</b> button a web page will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</div>
 <div align="center", style="color:#000000">
 <!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
@@ -34,22 +44,23 @@ end.rcode-->
 print(tli.table, include.rownames=F, type="html")
 end.rcode-->
 </div>
-<div align="center">
+<div id="row">
 <p>You can also embed plots, for example:</p>
 <h2>CRT Results</h2>
 </div>
-<div align="center">
+<div id="row">
 <!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
 if(nrow(statescore.graph) > 0) plot(statescore.plot) else print("No grades were tested for the 2012-13 Academic Year")
 end.rcode-->
 </div>
-<div align="center">
+<div id="row">
 <h2>MAP Results GO.</h2>
 </div>
-<div align="center">
+<div id="row">
 <!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
 if(nrow(quartile.graph) > 0) plot(quartile.plot) else print("No grades were tested for the 2012-13 Academic Year")
 end.rcode-->
+</div>
 </div>
 </body>
 </html>
