@@ -1,63 +1,111 @@
 <html>
 <style>
-table
-{
+h1{
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+	color:#FEBC11;
+	font-size:32px;
+	line-height:34px;
+	letter-spacing:1px;
+	padding: 0px 0 0 0;
+}
+h2 {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+	color:#FEBC11;
+	font-size:26px;
+	line-height:30px;
+	letter-spacing:1px;
+	padding: 16px 0 0 0;
+}
+p {
+  font-family: "FullerSansDT",Caibri, Helvetica, sans-serif;
+  color:#7F7F7F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:1px;
+  padding:0px 0 0 0;
+}
+ul {
+  font-family: "FullerSansDT",Caibri, Helvetica, sans-serif;
+  color:#7F7F7F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:1px;
+  width:400px;
+  padding:0px 0 0 0;
+}
+table {
   border-collapse: separate;
   border-spacing: 1em 0.5em;
-  background-color: #ddd;
-  color: #000;
+  background-color: #DDDDDD;
+  color: #7F7F7F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:1px;
+  width:350px;
+  padding:0px 0 0 0
 }
-#container {
-  display: table;
-  }
-#row {
-  display: table-row;
+td {
+  text-align: left;
+  min-width:50px;
 }
-#left, #right, #middle {
-  display: table-cell;
+#border
+{
+border:2px solid #a1a1a1;
+padding:10px 40px; 
+background:#FFFFFF;
+margin-left:auto;
+margin-right:auto;
+width:800px;
+border-radius:25px;
 }
 </style>
-<div id="container">
-<div id="row>
-<h1>Proof of Concept</h1>
+<div id = "border", align = "center">
+<div align= "center">
+<h1>
+<!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat(d)
+end.rcode-->
+</h1>
 </div>
-<div id="row">
-<strong>Let's see if the strong text works...</strong><br />
+<div align= "center">
+<p>This is the prototype Report Card Verification Template. All Graphs are generated procedurally by an R loop and exported into the HTML template.<br />
 <br />
-<em>next the slanty text...</em>
+-MH</p>
+<p>To Do List: <br />
+<ul>
+<li>Pull in School Leader, Real Estate, FTE, PPF, and Attrition data</li>
+<li>Pull in High School data where relevant</li>
+<li>Find a way to handle f***ing footnotes</li>
+<li>Pull in MAP growth</li>
+</ul>
+</p>
 </div>
-<div id="row">
-
+<div align= "center">
+<h2>School Demographics</h2>
 </div>
-
-<div id="row">
-This is an R HTML document. When you click the <b>Knit HTML</b> button a web page will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</div>
-<div align="center", style="color:#000000">
+<div align= "center">
 <!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
-library(xtable)
-data(tli)
-tli.table <- xtable(tli[1:10,])
-digits(tli.table)[c(2,6)] <- 0
+data(demographics.graph)
+demographics.table <- xtable(demographics.graph)
 end.rcode-->
 
 <!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-print(tli.table, include.rownames=F, type="html")
+print(demographics.table, include.rownames=TRUE, include.colnames=FALSE, type="html")
 end.rcode-->
 </div>
-<div id="row">
-<p>You can also embed plots, for example:</p>
+<div align= "center">
 <h2>CRT Results</h2>
 </div>
-<div id="row">
-<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
+<div align= "center">
+<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE
 if(nrow(statescore.graph) > 0) plot(statescore.plot) else print("No grades were tested for the 2012-13 Academic Year")
 end.rcode-->
 </div>
-<div id="row">
-<h2>MAP Results GO.</h2>
+<div align= "center">
+<h2>MAP Results</h2>
 </div>
-<div id="row">
-<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=1000, out.height=800, warning=FALSE, message=FALSE, echo=FALSE
+<div align= "center">
+<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE
 if(nrow(quartile.graph) > 0) plot(quartile.plot) else print("No grades were tested for the 2012-13 Academic Year")
 end.rcode-->
 </div>

@@ -3,7 +3,7 @@ rm(list=ls())
 #Declare globals
 pulldata <- 0
 
-formatdata <- 0
+formatdata <- 1
 
 publishdata_html <- 1
 
@@ -18,6 +18,7 @@ library(scales)
 library(grid)
 library(plyr)
 library(knitr)
+library(xtable)
 
 #pull full list of schools
 s <- odbcConnect("Schools_prod")
@@ -35,7 +36,7 @@ school.list <- sqlQuery(s, school.query, stringsAsFactors=FALSE)
 #clean up school names
 school.list$Display_Name <- gsub(":","",school.list$Display_Name)
 school.list$Display_Name <- gsub(",","",school.list$Display_Name)
-school.list$Display_Name <- gsub(" ","_",school.list$Display_Name)
+school.list$graph_name <- gsub(" ","_",school.list$Display_Name)
 
 odbcClose(s)
 
@@ -78,10 +79,10 @@ while(pulldata == 1) {
            ,Display_Name
            ,Male_Students_Percent
            ,Female_Students_Percent
-           ,White_Students_Percent
            ,Black_Students_Percent
            ,Latino_Students_Percent
            ,Asian_Students_Percent
+           ,White_Students_Percent
            ,Native_Students_Percent
            ,Pacific_Students_Percent
            ,TwoMoreRaces_Students_Percent
@@ -111,9 +112,9 @@ break
 while(formatdata == 1){
   
 #get data
-dget(paste(data.path,"quartile.raw.Rda", sep=""))
-dget(paste(data.path,"statescore.raw.Rda", sep=""))
-dget(paste(data.path,"demographics.raw.Rda", sep=""))
+quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
+statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
+demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
 
 ###########################################format quartile data######################################
 quartile.mod <- quartile.raw
@@ -152,7 +153,7 @@ statescore.mod <- reshape(statescore.mod,
                              direction = "long")
 
 statescore.mod$order <- (ifelse(statescore.mod$score_level == "School_Score_Percent", 1, ifelse(statescore.mod$score_level == "District_Score_Percent", 2, 3)))
-#set ordering for graphs
+#set ordering for graphssetwd("GitH)
 statescore.mod$order <- as.integer(paste(statescore.mod$order, statescore.mod$Score_Grouping_Cat_ID, sep=""))
 #set labels for buckets
 statescore.mod$score_stack <- paste(statescore.mod$score_level, statescore.mod$Score_Grouping_Name, sep= "_")
@@ -165,8 +166,29 @@ statescore.mod$Subtest_Name <- gsub("[[:space:]]*$","", statescore.mod$Subtest_N
 #round floating point scores
 statescore.mod$score <- round(statescore.mod$score, 0)
 
-#format demographic data
+################################################format demographic data#################################################
 demographics.mod <- demographics.raw
+demographics.mod <- ddply(demographics.mod, .(School_ID, Display_Name), transform, other_percent = (sum(Native_Students_Percent,
+                                                                                                        Pacific_Students_Percent,
+                                                                                                        TwoMoreRaces_Students_Percent
+                                                                                                        )))
+demographics.mod <- subset(demographics.mod, select=-c(Native_Students_Percent,
+                                                       Pacific_Students_Percent,
+                                                       TwoMoreRaces_Students_Percent
+                                                       ))
+demographics.mod <- rename(demographics.mod, replace=c("Male_Students_Percent" = "Percent Male",
+                                                "Female_Students_Percent" = "Percent Female",
+                                                "White_Students_Percent" = "Percent White",
+                                                "Black_Students_Percent" = "Percent Black",
+                                                "Latino_Students_Percent" = "Percent Latino",
+                                                "Asian_Students_Percent" = "Percent Asian",
+                                                "other_percent" = "Percent Other",
+                                                "Special_Needs_Percent" = "Percent Special Needs",
+                                                "F_and_R_Meals_Percent" = "Percent Free and Reduced Price Lunch"
+                                                 ))
+demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,11,9,10)]
+                                                                                                                         
+                                      
 
 #save data
 dput(quartile.mod, paste(data.path, "quartile.mod.RDa", sep=""))
@@ -191,7 +213,9 @@ x <- c(5, 3, 105, 138)
 for(s in x){
 #for(s in school.list$School_ID){
   n <- school.list[school.list$School_ID == s,]
-  n <- n$Display_Name
+  n <- n$graph_name
+  d <- school.list[school.list$School_ID == s,]
+  d <- d$Display_Name
   
   print(s)
   print(n)
@@ -233,7 +257,7 @@ quartile.plot <- quartile.plot + ylab('Quartile Distribution')
 quartile.plot <- quartile.plot + theme(axis.title.y = element_text(size = rel(1.8)), axis.text.y  = element_text(size = rel(1.8)), strip.text.y = element_text(size = rel(2.5), face='bold'))
 quartile.plot <- quartile.plot + geom_text(aes(x=Graph_Label, y=pos, label = label), size = 8)
 quartile.plot <- quartile.plot + theme(axis.text.y=element_blank(), panel.grid.major = element_blank(), plot.background = element_blank(), panel.background = element_blank(), panel.grid.minor = element_blank())
- 
+
 #################################set state score plot################################################
 statescore.graph <- subset(statescore.mod, School_ID == s)
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, label = sum(score))
@@ -257,6 +281,12 @@ statescore.plot <- statescore.plot + theme(axis.title.y = element_text(size = re
 statescore.plot <- statescore.plot + theme(axis.text.y=element_blank(), plot.background = element_blank(), panel.background=element_blank() , panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 6.8)
 statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
+
+#####################################Subset Demographics#############################################
+  
+demographics.graph <- subset(demographics.mod, School_ID == s)
+demographics.graph <- subset(demographics.graph, select=-c(School_ID, Display_Name))
+demographics.graph <- t(demographics.graph)
   
 #####################################Knit to HTML Template###########################################
 
