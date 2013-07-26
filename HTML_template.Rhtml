@@ -70,7 +70,7 @@ end.rcode-->
 <div align= "center">
 <p>This is the prototype Report Card Verification Template. All Graphs are generated procedurally by an R loop and exported into the HTML template.<br />
 <br />
--MH</p>
+<strong>-MH</strong></p>
 <p>To Do List: <br />
 <ul>
 <li>Pull in School Leader, Real Estate, FTE, PPF, and Attrition data</li>
@@ -97,17 +97,21 @@ end.rcode-->
 <h2>CRT Results</h2>
 </div>
 <div align= "center">
-<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE
-if(nrow(statescore.graph) > 0) plot(statescore.plot) else print("No grades were tested for the 2012-13 Academic Year")
+<p>
+<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(nrow(statescore.graph) > 0) plot(statescore.plot) else cat("No grades were tested for the 2012-13 Academic Year")
 end.rcode-->
+</p>
 </div>
 <div align= "center">
 <h2>MAP Results</h2>
 </div>
 <div align= "center">
-<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE
-if(nrow(quartile.graph) > 0) plot(quartile.plot) else print("No grades were tested for the 2012-13 Academic Year")
+<p>
+<!--begin.rcode fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(nrow(quartile.graph) > 0) plot(quartile.plot) else cat("No grades were tested for the 2012-13 Academic Year")
 end.rcode-->
+</p>
 </div>
 </div>
 </body>
