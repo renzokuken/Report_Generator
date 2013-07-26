@@ -1,7 +1,7 @@
 rm(list=ls())
 
 #Declare globals
-pulldata <- 0
+pulldata <- 1
 
 formatdata <- 1
 
@@ -64,12 +64,12 @@ while(pulldata == 1) {
             ,Score_Grouping_Name
             ,Score_Grouping_Cat_ID
             ,State_Num_Tested
-            ,State_Score_Percent
+            ,State_Scores_Percent
             ,District_Num_Tested
-            ,District_Score_Percent
+            ,District_Scores_Percent
             ,School_Num_Tested
-            ,School_Score_Percent
-            FROM State_Scores.dbo.v_All_Scores
+            ,School_Scores_Percent
+            FROM Report_Card.dbo.v_State_Scores_RC_2012
             WHERE AC_Year = 2012
             AND Score_Grouping_Cat_ID IN (2,3)
             ")
@@ -94,7 +94,7 @@ while(pulldata == 1) {
   
   
   quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
-  statescore.raw <- sqlQuery(ss, statescore.query, stringsAsFactors=FALSE)
+  statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
   demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
   
 
@@ -145,22 +145,25 @@ quartile.mod$label <- abs(quartile.mod$percent_at_quartile)
 statescore.mod <- statescore.raw
 #transform from wide to long
 statescore.mod <- reshape(statescore.mod,
-                             varying = c("State_Score_Percent", "District_Score_Percent", "School_Score_Percent"),
+                             varying = c("State_Scores_Percent", "District_Scores_Percent", "School_Scores_Percent"),
                              v.names = "score",
                              timevar = "score_level",
-                             times = c("State_Score_Percent", "District_Score_Percent", "School_Score_Percent"),
+                             times = c("State_Scores_Percent", "District_Scores_Percent", "School_Scores_Percent"),
                              new.row.names = 1:5000,
                              direction = "long")
 
-statescore.mod$order <- (ifelse(statescore.mod$score_level == "School_Score_Percent", 1, ifelse(statescore.mod$score_level == "District_Score_Percent", 2, 3)))
-#set ordering for graphssetwd("GitH)
+#multiply percentage
+statescore.mod$score <- (statescore.mod$score * 100)
+#set column order
+statescore.mod$order <- (ifelse(statescore.mod$score_level == "School_Scores_Percent", 1, ifelse(statescore.mod$score_level == "District_Scores_Percent", 2, 3)))
+#set ordering for graphs
 statescore.mod$order <- as.integer(paste(statescore.mod$order, statescore.mod$Score_Grouping_Cat_ID, sep=""))
 #set labels for buckets
 statescore.mod$score_stack <- paste(statescore.mod$score_level, statescore.mod$Score_Grouping_Name, sep= "_")
 #replace underscores
 statescore.mod$score_stack <- gsub("_"," ", statescore.mod$score_stack)
 #remove "score" because it looks stupid :/
-statescore.mod$score_stack <- gsub(" Score ", " ", statescore.mod$score_stack)
+statescore.mod$score_stack <- gsub(" Scores ", " ", statescore.mod$score_stack)
 #cut trailing spaces
 statescore.mod$Subtest_Name <- gsub("[[:space:]]*$","", statescore.mod$Subtest_Name)
 #round floating point scores
@@ -209,9 +212,9 @@ demographics.mod <- dget(paste(data.path,"demographics.mod.Rda", sep=""))
 quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6") 
 statescore.palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "#B9B9B9")
   
-x <- c(5, 3, 105, 138)
-for(s in x){
-#for(s in school.list$School_ID){
+#x <- c(5, 3, 105, 138)
+#for(s in x){
+for(s in school.list$School_ID){
   n <- school.list[school.list$School_ID == s,]
   n <- n$graph_name
   d <- school.list[school.list$School_ID == s,]
