@@ -1,0 +1,68 @@
+@charset "utf-8";
+/* CSS Document */
+* {
+margin: 0;
+padding: 0;
+list-style: none;
+}
+
+/*HTML tags*/
+
+h1{
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+	color:#FEBC11;
+	font-size:32px;
+	line-height:34px;
+	letter-spacing:1px;
+	padding: 0px 0 0 0;
+}
+h2 {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+	color:#FEBC11;
+	font-size:26px;
+	line-height:30px;
+	letter-spacing:1px;
+	padding: 16px 0 0 0;
+}
+p {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#7F7F7F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:1px;
+  padding:0px 0 0 0;
+}
+ul {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#7F7F7F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:1px;
+  width:400px;
+  padding:0px 0 0 0;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 1em 0.5em;
+  background-color: #DDDDDD;
+  color: #7F7F7F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:1px;
+  width:350px;
+  padding:0px 0 0 0
+}
+td {
+  text-align: left;
+  min-width:50px;
+}
+#border
+{
+border:2px solid #a1a1a1;
+padding:10px 40px; 
+background:#FFFFFF;
+margin-left:auto;
+margin-right:auto;
+width:800px;
+border-radius:25px;
+}

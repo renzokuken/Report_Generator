@@ -1,7 +1,7 @@
 rm(list=ls())
 
 #Declare globals
-pulldata <- 1
+pulldata <- 0
 
 formatdata <- 1
 
@@ -12,6 +12,7 @@ publishdata_png <- 0
 data.path <<- paste("C:/Users/mhilton/Documents/R_Data/HTML_Reports/")
 report.path <<- paste("C:/Users/mhilton/Documents/R_Graphs/HTML_Reports/")
 
+
 library(RODBC)
 library(ggplot2)
 library(scales)
@@ -19,12 +20,14 @@ library(grid)
 library(plyr)
 library(knitr)
 library(xtable)
+library(markdown)
 
 #pull full list of schools
 s <- odbcConnect("Schools_prod")
 #pull current schools
 school.query <- ("SELECT
              School_ID
+            ,Type
             ,Display_Name
             FROM Schools.dbo.Schools
             WHERE Academic_Year_Closed IS NULL
@@ -43,16 +46,16 @@ odbcClose(s)
 while(pulldata == 1) {
   
 #Declare ODBC connections
-  rc <- odbcConnect('Report_Card_prod')
-  ss <- odbcConnect('State_Scores_prod')
+rc <- odbcConnect('Report_Card_prod')
+ss <- odbcConnect('State_Scores_prod')
   
 #Declare SQL Queries
-  quartile.query <- ("SELECT
+quartile.query <- ("SELECT
                         *
                         FROM v_School_Quartile_current_2012
                         ")
     
-  statescore.query <- ("SELECT
+statescore.query <- ("SELECT
              State_Score_Header_ID
             ,State_ID
             ,AC_Year
@@ -74,7 +77,7 @@ while(pulldata == 1) {
             AND Score_Grouping_Cat_ID IN (2,3)
             ")
   
-  demographics.query <- ("SELECT 
+demographics.query <- ("SELECT 
             School_ID
            ,Display_Name
            ,Male_Students_Percent
@@ -93,13 +96,13 @@ while(pulldata == 1) {
            ")
   
   
-  quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
-  statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
-  demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
+quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
+statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
+demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
   
 
-  odbcClose(rc)
-  odbcClose(ss)
+odbcClose(rc)
+odbcClose(ss)
 
   
 dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
@@ -134,6 +137,11 @@ quartile.mod <- reshape(quartile.mod,
 
 #generate order for bar stacking
 quartile.mod$order <- ifelse(quartile.mod$quartile == "Percent_At_Above_75_NPR", 4, ifelse(quartile.mod$quartile == "Percent_At_50_Below_75_NPR", 3, ifelse(quartile.mod$quartile == "Percent_At_25_Below_50_NPR",1, 2)))
+
+#generate facet order
+quartile.mod$Sub_Test_Name <- factor(quartile.mod$Sub_Test_Name,
+                                    levels = c("Mathematics", "Reading"))
+
 
 #generate order for bar sequence
 quartile.mod$sequence <- paste(quartile.mod$Season, quartile.mod$Grade_When_Taken_int)
@@ -171,6 +179,7 @@ statescore.mod$score <- round(statescore.mod$score, 0)
 
 ################################################format demographic data#################################################
 demographics.mod <- demographics.raw
+#process demographic rates
 demographics.mod <- ddply(demographics.mod, .(School_ID, Display_Name), transform, other_percent = (sum(Native_Students_Percent,
                                                                                                         Pacific_Students_Percent,
                                                                                                         TwoMoreRaces_Students_Percent
@@ -180,29 +189,29 @@ demographics.mod <- subset(demographics.mod, select=-c(Native_Students_Percent,
                                                        TwoMoreRaces_Students_Percent
                                                        ))
 demographics.mod <- rename(demographics.mod, replace=c("Male_Students_Percent" = "Percent Male",
-                                                "Female_Students_Percent" = "Percent Female",
-                                                "White_Students_Percent" = "Percent White",
-                                                "Black_Students_Percent" = "Percent Black",
-                                                "Latino_Students_Percent" = "Percent Latino",
-                                                "Asian_Students_Percent" = "Percent Asian",
-                                                "other_percent" = "Percent Other",
-                                                "Special_Needs_Percent" = "Percent Special Needs",
-                                                "F_and_R_Meals_Percent" = "Percent Free and Reduced Price Lunch"
+                                                       "Female_Students_Percent" = "Percent Female",
+                                                       "White_Students_Percent" = "Percent White",
+                                                       "Black_Students_Percent" = "Percent Black",
+                                                       "Latino_Students_Percent" = "Percent Latino",
+                                                       "Asian_Students_Percent" = "Percent Asian",
+                                                       "other_percent" = "Percent Other",
+                                                       "Special_Needs_Percent" = "Percent Special Needs",
+                                                       "F_and_R_Meals_Percent" = "Percent Free and Reduced Price Lunch"
                                                  ))
 demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,11,9,10)]
                                                                                                                          
                                       
 
 #save data
-dput(quartile.mod, paste(data.path, "quartile.mod.RDa", sep=""))
-dput(statescore.mod, paste(data.path,"statescore.mod.RDa", sep =""))
-dput(demographics.mod, paste(data.path,"demographics.mod.RDa", sep=""))
+dput(quartile.mod, paste(data.path, "quartile.mod.Rda", sep=""))
+dput(statescore.mod, paste(data.path,"statescore.mod.Rda", sep =""))
+dput(demographics.mod, paste(data.path,"demographics.mod.Rda", sep=""))
 break
 }
 
 #########################################Generate HTML reports :D###################################
-while(publishdata_html == 1) {  
-
+while(publishdata_html == 1) {    
+  
 #get data
 quartile.mod <- dget(paste(data.path,"quartile.mod.Rda", sep=""))
 statescore.mod <- dget(paste(data.path,"statescore.mod.Rda", sep=""))
@@ -212,13 +221,15 @@ demographics.mod <- dget(paste(data.path,"demographics.mod.Rda", sep=""))
 quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6") 
 statescore.palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "#B9B9B9")
   
-#x <- c(5, 3, 105, 138)
-#for(s in x){
-for(s in school.list$School_ID){
+x <- c(5, 3, 73, 105, 138)
+for(s in x){
+#for(s in school.list$School_ID){
   n <- school.list[school.list$School_ID == s,]
   n <- n$graph_name
   d <- school.list[school.list$School_ID == s,]
   d <- d$Display_Name
+  t <- school.list[school.list$School_ID == s,]
+  t <- t$Type
   
   print(s)
   print(n)
@@ -250,16 +261,45 @@ q2$quartile <- factor(q2$quartile,levels = rev(q2$quartile[order(q2$order)]),ord
 
 #plot graph
 quartile.plot <- ggplot(quartile.graph)
-quartile.plot <- quartile.plot + geom_bar(data = q1, aes(x=Graph_Label, y=percent_at_quartile, fill=quartile, order=order), stat="identity", width=0.5)
-quartile.plot <- quartile.plot + geom_bar(data = q2, aes(x=Graph_Label, y=percent_at_quartile, fill=quartile, order=order), stat="identity", width=0.5)
-quartile.plot <- quartile.plot + scale_fill_manual(values = quartile.palette, breaks = c("Percent At Above 75 NPR","Percent At 50 Below 75 NPR","Percent At 25 Below 50 NPR","Percent Below 25 NPR"))
+quartile.plot <- quartile.plot + geom_bar(data = q1, 
+                                          aes(x=Graph_Label, 
+                                              y=percent_at_quartile, 
+                                              fill=quartile, 
+                                              order=order), 
+                                          stat="identity", 
+                                          width=0.5)
+quartile.plot <- quartile.plot + geom_bar(data = q2, 
+                                          aes(x=Graph_Label, 
+                                              y=percent_at_quartile, 
+                                              fill=quartile, 
+                                              order=order), 
+                                          stat="identity", 
+                                          width=0.5)
+quartile.plot <- quartile.plot + scale_fill_manual(values = quartile.palette, 
+                                                   breaks = c("Percent At Above 75 NPR",
+                                                              "Percent At 50 Below 75 NPR",
+                                                              "Percent At 25 Below 50 NPR",
+                                                              "Percent Below 25 NPR"))
 quartile.plot <- quartile.plot + facet_grid(~ Sub_Test_Name)
 quartile.plot <- quartile.plot + xlab('Season')
-quartile.plot <- quartile.plot + theme(axis.title.x = element_text(size = rel(1.8)), axis.text.x  = element_text(size = rel(1.8), angle=45), strip.text.x = element_text(size = rel(2.5), face='bold'))
 quartile.plot <- quartile.plot + ylab('Quartile Distribution')
-quartile.plot <- quartile.plot + theme(axis.title.y = element_text(size = rel(1.8)), axis.text.y  = element_text(size = rel(1.8)), strip.text.y = element_text(size = rel(2.5), face='bold'))
+quartile.plot <- quartile.plot + theme(axis.title.x = element_text(size = rel(1.8)),
+                                       axis.ticks.x = element_blank(),
+                                       axis.text.x = element_text(size = rel(1.8), angle=30), 
+                                       strip.text.x = element_text(size = rel(2.5), face='bold'),
+                                       axis.title.y = element_text(size = rel(1.8)), 
+                                       axis.ticks.y = element_blank(),
+                                       strip.text.y = element_text(size = rel(2.5), face='bold'),
+                                       axis.text.y=element_blank(),
+                                       legend.title = element_blank(),
+                                       legend.text = element_text(face='bold'),
+                                       plot.background = element_blank(), 
+                                       strip.background = element_blank(),
+                                       panel.background = element_blank(),
+                                       panel.margin = unit(1.5, "cm"),
+                                       panel.grid.major = element_blank(),
+                                       panel.grid.minor = element_blank())
 quartile.plot <- quartile.plot + geom_text(aes(x=Graph_Label, y=pos, label = label), size = 8)
-quartile.plot <- quartile.plot + theme(axis.text.y=element_blank(), panel.grid.major = element_blank(), plot.background = element_blank(), panel.background = element_blank(), panel.grid.minor = element_blank())
 
 #################################set state score plot################################################
 statescore.graph <- subset(statescore.mod, School_ID == s)
@@ -271,17 +311,29 @@ statescore.graph$label <- ifelse(statescore.graph$Score_Grouping_Cat_ID == 2, ""
 statescore.plot <- ggplot(statescore.graph, aes(x=reorder(score_level, order), y=score, fill=score_stack))
 statescore.plot <- statescore.plot + geom_bar(stat="identity", width=1, order=order)
 statescore.plot <- statescore.plot + scale_fill_manual(values = statescore.palette, breaks = c("School Percent Advanced", "School Percent Proficient", "District Percent Advanced", "District Percent Proficient", "State Percent Advanced", "State Percent Proficient"))
-statescore.plot <- statescore.plot + facet_grid(Subtest_Name ~ Grade)
+#I may need to break this out by subject...
+#swap formatting for high school CRT tests
+if(t=="H")  statescore.plot <- statescore.plot + facet_wrap(Subtest_Name ~ Grade, ncol = 4) else statescore.plot <- statescore.plot + facet_grid(~ Subtest_Name ~ Grade)
 statescore.plot <- statescore.plot + coord_equal(ratio = 0.07)
-statescore.plot <- statescore.plot + theme(panel.margin = unit(0.7, "cm"))
-statescore.plot <- statescore.plot + theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(face='bold'))
-statescore.plot <- statescore.plot + theme(strip.text.y = element_text(angle = 45), strip.background = element_blank())
-statescore.plot <- statescore.plot + xlab('Grade')
-statescore.plot <- statescore.plot + theme(axis.title.x = element_text(size = rel(1.8)), axis.text.x  = element_blank(), strip.text.x = element_text(size = rel(2.5)))
-statescore.plot <- statescore.plot + ylab('Percent at Level')
 statescore.plot <- statescore.plot + scale_y_continuous(limits = c(0, 120))
-statescore.plot <- statescore.plot + theme(axis.title.y = element_text(size = rel(1.8)), axis.text.y  = element_text(size = rel(0.8)), strip.text.y = element_text(size = rel(1.2), angle = 45, face='bold'), strip.background = element_blank())
-statescore.plot <- statescore.plot + theme(axis.text.y=element_blank(), plot.background = element_blank(), panel.background=element_blank() , panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+statescore.plot <- statescore.plot + xlab('Grade')
+statescore.plot <- statescore.plot + ylab('Percent at Level')
+statescore.plot <- statescore.plot + theme(axis.title.x = element_text(size = rel(1.8)), 
+                                           axis.ticks.x = element_blank(),
+                                           strip.text.x = element_text(size = rel(2.5)),
+                                           axis.title.y = element_text(size = rel(1.8)),
+                                           axis.text.y = element_blank(),
+                                           axis.ticks.y = element_blank(),
+                                           strip.text.y = element_text(size = rel(1.8), angle = 0, face='bold'),
+                                           legend.title = element_blank(), 
+                                           legend.position = "bottom",
+                                           strip.background = element_blank(),
+                                           plot.background = element_blank(),
+                                           strip.background = element_blank(),
+                                           panel.background = element_blank(),
+                                           panel.margin = unit(0.7, "cm"),
+                                           panel.grid.major = element_blank(), 
+                                           panel.grid.minor = element_blank())
 statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 6.8)
 statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
 
@@ -295,7 +347,22 @@ demographics.graph <- t(demographics.graph)
 
 knit2html("HTML_template.Rhtml")
 #hatersgonnahate.jpg
+filename <- paste(report.path,n,"_HTML_Template", sep="")
 file.rename(from="HTML_template.html",to=paste(report.path,n,"_HTML_Template.html", sep=""))
+  
+#####################################Convert HTML to PDF#############################################
+#set I/O variables
+input <- paste(report.path,n,"_HTML_Template.html", sep="")
+output <- paste(report.path,n,"_HTML_Template.pdf", sep="")
+#execute <-paste("c:/Program Files (x86)/wkhtmltopdf/wkhtmltopdf"," ",input," ",output, sep="")
+
+#updates Batch file. NOTE: This file lives in the wkhtmltopdf directory.
+fileConn<-file("C:/Program Files (x86)/wkhtmltopdf/pdf_send.bat")
+writeLines(paste("wkhtmltopdf"," ",input," ",output, sep=""), fileConn)
+close(fileConn)  
+
+#call batch file for command line conversion
+system("pdf_convert.bat")
 }
 break
 }
