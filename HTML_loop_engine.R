@@ -1,5 +1,7 @@
+
 rm(list=ls())
 
+#set directory
 wd <- getwd()
 if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator")
 #Declare globals
@@ -10,7 +12,7 @@ formatdata <- 1
 
 publishdata_html <- 1
 
-publishdata_png <- 0
+publishdata_pdf <- 0
 
 data.path <<- paste("C:/Users/mhilton/Documents/R_Data/HTML_Reports/")
 report.path <<- paste("C:/Users/mhilton/Documents/R_Graphs/HTML_Reports/")
@@ -25,9 +27,14 @@ library(knitr)
 library(xtable)
 library(markdown)
 
-#pull full list of schools
-s <- odbcConnect("Schools_prod")
-#pull current schools
+while(pulldata == 1) {
+  
+#Declare ODBC connections
+s <- odbcConnect('Schoolsprod')
+rc <- odbcConnect('Report_Card_prod')
+ss <- odbcConnect('State_Scores_prod')
+  
+#Declare SQL Queries
 school.query <- ("SELECT
              School_ID
             ,Type
@@ -37,22 +44,6 @@ school.query <- ("SELECT
             AND Year_Opened < 2012
             ")
 
-school.list <- sqlQuery(s, school.query, stringsAsFactors=FALSE)
-
-#clean up school names
-school.list$Display_Name <- gsub(":","",school.list$Display_Name)
-school.list$Display_Name <- gsub(",","",school.list$Display_Name)
-school.list$graph_name <- gsub(" ","_",school.list$Display_Name)
-
-odbcClose(s)
-
-while(pulldata == 1) {
-  
-#Declare ODBC connections
-rc <- odbcConnect('Report_Card_prod')
-ss <- odbcConnect('State_Scores_prod')
-  
-#Declare SQL Queries
 quartile.query <- ("SELECT
                         *
                         FROM v_School_Quartile_current_2012
@@ -98,16 +89,18 @@ demographics.query <- ("SELECT
            WHERE PP_ID = 32
            ")
   
-  
+school.raw <- sqlQuery(s, school.query, stringsAsFactors=FALSE)  
 quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
 statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
   
 
+odbcClose(s)
 odbcClose(rc)
 odbcClose(ss)
 
-  
+
+dput(school.raw, paste(data.path,"school.raw.Rda", sep=""))
 dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
 dput(demographics.raw, paste(data.path,"demographics.raw.Rda", sep=""))
@@ -118,9 +111,18 @@ break
 while(formatdata == 1){
   
 #get data
+school.raw <- dget(paste(data.path,"school.raw.Rda", sep=""))
 quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
 statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
 demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
+
+###########################################format school data########################################
+#clean up school names
+school.list <- school.raw
+
+school.list$Display_Name <- gsub(":","",school.list$Display_Name)
+school.list$Display_Name <- gsub(",","",school.list$Display_Name)
+school.list$graph_name <- gsub(" ","_",school.list$Display_Name)
 
 ###########################################format quartile data######################################
 quartile.mod <- quartile.raw
@@ -206,6 +208,7 @@ demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,11,9,10)]
                                       
 
 #save data
+dput(school.lst, paste(data.path, "school.list.Rda", sep=""))
 dput(quartile.mod, paste(data.path, "quartile.mod.Rda", sep=""))
 dput(statescore.mod, paste(data.path,"statescore.mod.Rda", sep =""))
 dput(demographics.mod, paste(data.path,"demographics.mod.Rda", sep=""))
@@ -216,6 +219,7 @@ break
 while(publishdata_html == 1) {    
   
 #get data
+school.list <- dget(paste(data.path,"school.list.Rda", sep=""))
 quartile.mod <- dget(paste(data.path,"quartile.mod.Rda", sep=""))
 statescore.mod <- dget(paste(data.path,"statescore.mod.Rda", sep=""))
 demographics.mod <- dget(paste(data.path,"demographics.mod.Rda", sep=""))
@@ -314,43 +318,43 @@ statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level),
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, pos = (cumsum(score) + 15))
 
  sublist <- unique(unlist(statescore.graph$Subtest_Cat_RC_ID, use.names = FALSE))
-  for (sub in sublist){
-statescore.graph.loop <- assign(paste("statescore.graph.", sub, sep = ""),subset(statescore.graph, Subtest_Cat_RC_ID == sub))
+for (sub in sublist){
+                      statescore.graph.loop <- assign(paste("statescore.graph.", sub, sep = ""),subset(statescore.graph, Subtest_Cat_RC_ID == sub))
 
-statescore.graph.loop$label <- ifelse(statescore.graph.loop$Score_Grouping_Cat_ID == 2, "", statescore.graph.loop$label)
+                      statescore.graph.loop$label <- ifelse(statescore.graph.loop$Score_Grouping_Cat_ID == 2, "", statescore.graph.loop$label)
   
-statescore.plot <- ggplot(statescore.graph.loop, aes(x=reorder(score_level, order), y=score, fill=score_stack))
-statescore.plot <- statescore.plot + geom_bar(stat="identity", width=1, order=order)
-statescore.plot <- statescore.plot + scale_fill_manual(values = statescore.palette, breaks = c("School Percent Advanced", "School Percent Proficient", "District Percent Advanced", "District Percent Proficient", "State Percent Advanced", "State Percent Proficient"))
+                      statescore.plot <- ggplot(statescore.graph.loop, aes(x=reorder(score_level, order), y=score, fill=score_stack))
+                      statescore.plot <- statescore.plot + geom_bar(stat="identity", width=1, order=order)
+                      statescore.plot <- statescore.plot + scale_fill_manual(values = statescore.palette, breaks = c("School Percent Advanced", "School Percent Proficient", "District Percent Advanced", "District Percent Proficient", "State Percent Advanced", "State Percent Proficient"))
 #I may need to break this out by subject...
 #swap formatting for high school CRT tests
 #if(t=="H")  statescore.plot <- statescore.plot + facet_wrap(Subtest_Name ~ Grade, ncol = 4) else statescore.plot <- statescore.plot + facet_grid(~ Subtest_Name ~ Grade)
-statescore.plot <- statescore.plot + facet_wrap(~ Grade, nrow = 1)
+                      statescore.plot <- statescore.plot + facet_wrap(~ Grade, nrow = 1)
 
-statescore.plot <- statescore.plot + coord_equal(ratio = 0.07)
-statescore.plot <- statescore.plot + scale_y_continuous(limits = c(0, 120))
-statescore.plot <- statescore.plot + xlab('Grade')
-statescore.plot <- statescore.plot + ylab('Percent at Level')
-statescore.plot <- statescore.plot + theme(axis.title.x = element_text(size = rel(5), color = "#FEBC11"), 
-                                           axis.ticks.x = element_blank(),
-                                           axis.text.x = element_blank(),
-                                           strip.text.x = element_text(size = rel(5)),
-                                           axis.title.y = element_blank(),
-                                           axis.text.y = element_blank(),
-                                           axis.ticks.y = element_blank(),
-                                           strip.text.y = element_text(size = rel(1.8), angle = 0, face='bold'),
-                                           legend.title = element_blank(), 
-                                           legend.position = "bottom",
-                                           strip.background = element_blank(),
-                                           plot.background = element_blank(),
-                                           strip.background = element_blank(),
-                                           panel.background = element_blank(),
-                                           panel.margin = unit(0.7, "cm"),
-                                           panel.grid.major = element_blank(), 
-                                           panel.grid.minor = element_blank())
-statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 6.8)
-statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
-assign(paste("statescore.plot.", sub, sep = ""), statescore.plot)
+                      statescore.plot <- statescore.plot + coord_equal(ratio = 0.07)
+                      statescore.plot <- statescore.plot + scale_y_continuous(limits = c(0, 120))
+                      statescore.plot <- statescore.plot + xlab('Grade')
+                      statescore.plot <- statescore.plot + ylab('Percent at Level')
+                      statescore.plot <- statescore.plot + theme(axis.title.x = element_text(size = rel(5), color = "#FEBC11"), 
+                                                                 axis.ticks.x = element_blank(),
+                                                                 axis.text.x = element_blank(),
+                                                                 strip.text.x = element_text(size = rel(5)),
+                                                                 axis.title.y = element_blank(),
+                                                                 axis.text.y = element_blank(),
+                                                                 axis.ticks.y = element_blank(),
+                                                                 strip.text.y = element_text(size = rel(1.8), angle = 0, face='bold'),
+                                                                 legend.title = element_blank(), 
+                                                                 legend.position = "bottom",
+                                                                 strip.background = element_blank(),
+                                                                 plot.background = element_blank(),
+                                                                 strip.background = element_blank(),
+                                                                 panel.background = element_blank(),
+                                                                 panel.margin = unit(0.7, "npc"),
+                                                                 panel.grid.major = element_blank(), 
+                                                                 panel.grid.minor = element_blank())
+                      statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 6.8)
+                      statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
+                      assign(paste("statescore.plot.", sub, sep = ""), statescore.plot)
 }
 
 #####################################Subset Demographics#############################################
@@ -365,8 +369,9 @@ knit2html("HTML_template.Rhtml")
 #hatersgonnahate.jpg
 filename <- paste(report.path,n,"_HTML_Template", sep="")
 file.rename(from="HTML_template.html",to=paste(report.path,n,"_HTML_Template.html", sep=""))
-  
+
 #####################################Convert HTML to PDF#############################################
+while(publishdata_pdf == 1) {
 #set I/O variables
 input <- paste(report.path,n,"_HTML_Template.html", sep="")
 output <- paste(report.path,n,"_HTML_Template.pdf", sep="")
@@ -378,6 +383,8 @@ close(fileConn)
 
 #call batch file for command line conversion
 system("pdf_convert.bat")
+}
+break
 }
 break
 }
