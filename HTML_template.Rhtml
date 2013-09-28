@@ -47,7 +47,11 @@ end.rcode-->
 <div align= "center">
 <p>
 <!--begin.rcode statescore.graph, fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(nrow(statescore.graph) > 0) plot(statescore.plot) else cat("No grades were tested for the 2012-13 Academic Year")
+if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {plot(statescore.plot.1)} else {cat()}
+if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) {plot(statescore.plot.2)} else {cat()}
+if(!exists("statescore.graph.3")) {cat()} else if(nrow(statescore.graph.3) > 0) {plot(statescore.plot.3)} else {cat()}
+if(!exists("statescore.graph.4")) {cat()} else if(nrow(statescore.graph.4) > 0) {plot(statescore.plot.4)} else {cat()}
+if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) {plot(statescore.plot.5)} else {cat()}
 end.rcode-->
 </p>
 </div>
