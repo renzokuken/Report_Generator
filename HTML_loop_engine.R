@@ -3,7 +3,7 @@ rm(list=ls())
 
 #set directory
 wd <- getwd()
-if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator")
+if (wd != "C:/Users/Mike/Documents/GitHub/Report_Generator") setwd("C:/Users/Mike/Documents/GitHub/Report_Generator")
 #Declare globals
 
 pulldata <- 0
@@ -14,8 +14,8 @@ publishdata_html <- 1
 
 publishdata_pdf <- 0
 
-data.path <<- paste("C:/Users/mhilton/Documents/R_Data/HTML_Reports/")
-report.path <<- paste("C:/Users/mhilton/Documents/R_Graphs/HTML_Reports/")
+data.path <<- paste("C:/Users/Mike/Documents/R_Data/HTML_Reports/")
+report.path <<- paste("C:/Users/Mike/Documents/R_Graphs/HTML_Reports/")
 
 
 library(RODBC)
@@ -298,7 +298,7 @@ quartile.plot <- quartile.plot + ylab('Quartile Distribution')
 quartile.plot <- quartile.plot + theme(axis.title.x = element_text(size = rel(1.8)),
                                        axis.ticks.x = element_blank(),
                                        axis.text.x = element_text(size = rel(1.8), angle=30), 
-                                       strip.text.x = element_text(size = rel(2.5), face='bold'),
+                                       strip.text.x = element_text(size = rel(2.5), face='bold', color = "#FEBC11"),
                                        axis.title.y = element_text(size = rel(1.8)), 
                                        axis.ticks.y = element_blank(),
                                        strip.text.y = element_text(size = rel(2.5), face='bold'),
@@ -337,9 +337,10 @@ for (sub in sublist){
 
                       statescore.plot <- statescore.plot + coord_equal(ratio = 0.07)
                       statescore.plot <- statescore.plot + scale_y_continuous(limits = c(0, 120))
+                      #statescore.plot <- statescore.plot + coord_fixed(ratio = 0.05)
                       statescore.plot <- statescore.plot + xlab('Grade')
                       statescore.plot <- statescore.plot + ylab('Percent at Level')
-                      statescore.plot <- statescore.plot + ggtitle(Subtest_Cat_Name)
+                      #statescore.plot <- statescore.plot + ggtitle(Subtest_Cat_Name)
                       statescore.plot <- statescore.plot + theme(axis.title.x = element_blank(),
                                                                  axis.ticks.x = element_blank(),
                                                                  axis.text.x = element_blank(),
@@ -351,7 +352,7 @@ for (sub in sublist){
                                                                  legend.title = element_blank(), 
                                                                  legend.position = "bottom",
                                                                  strip.background = element_blank(),
-                                                                 plot.title = element_blank(),
+                                                                 #plot.title = element_blank(),
                                                                  plot.background = element_blank(),
                                                                  strip.background = element_blank(),
                                                                  panel.background = element_blank(),
@@ -359,7 +360,7 @@ for (sub in sublist){
                                                                  panel.grid.major = element_blank(), 
                                                                  panel.grid.minor = element_blank())
                       statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 5.1)
-                      statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
+                      statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2)  
                       assign(paste("statescore.plot.", sub, sep = ""), statescore.plot)
                       rm(statescore.graph.loop)
 
