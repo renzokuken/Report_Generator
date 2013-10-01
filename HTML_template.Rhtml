@@ -21,17 +21,17 @@ end.rcode-->
 <strong>-MH</strong></p>
 <p>To Do List: <br />
 <ul>
-<li>Pull in School Leader, Real Estate, FTE, PPF, and Attrition data</li>
-<li>Pull in High School data where relevant</li>
-<li>Find a way to handle footnotes</li>
-<li>Pull in MAP growth</li>
+<li>Pull in School Leader, Real Estate, FTE, PPF, and Attrition data. Need to query, transform and viz.</li>
+<li>Pull in High School data where relevant. FIXED: Can be done with conditional headers!</li>
+<li>Find a way to handle footnotes. Probably via CSV.</li>
+<li>Pull in MAP growth. Easy.</li>
 </ul>
 </p>
 </div>
 <div align= "center">
 <h2>School Demographics</h2>
 </div>
-<div align= "center">
+<div id="tableborder", align= "center">
 <!--begin.rcode demographics.table, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
 data(demographics.graph)
 demographics.table <- xtable(demographics.graph)
@@ -47,29 +47,37 @@ end.rcode-->
 <div align= "center">
 <p>
 <!--begin.rcode statescore.label, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-cat("<h2>Reading</h2>")
-cat("")
 if(nrow(statescore.graph) == 0){cat("<p>No grades were tested for the 2012-13 Academic Year</p>")}
 end.rcode-->
-<!--begin.rcode statescore.graph.1, fig.width=8, fig.height=5, fig.align='center', out.width=350, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {plot(statescore.plot.1)} else {cat()}
+<!--begin.rcode statescore.graph.1, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {cat("<h2>Reading</h2>")
+																				 print(statescore.plot.1)
+																				} else {cat()}
 end.rcode-->
-<!--begin.rcode statescore.graph.2, fig.width=8, fig.height=5, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) {plot(statescore.plot.2)} else {cat()}
+<!--begin.rcode statescore.graph.2, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) {cat("<h2>Mathematics</h2>")
+																				 plot(statescore.plot.2)
+																				} else {cat()}
 end.rcode-->
-<!--begin.rcode statescore.graph.3, fig.width=8, fig.height=5, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("statescore.graph.3")) {cat()} else if(nrow(statescore.graph.3) > 0) {plot(statescore.plot.3)} else {cat()}
+<!--begin.rcode statescore.graph.3, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.3")) {cat()} else if(nrow(statescore.graph.3) > 0) {cat("<h2>Science</h2>")
+																				 plot(statescore.plot.3)
+																				} else {cat()}
 end.rcode-->
-<!--begin.rcode statescore.graph.4, fig.width=8, fig.height=5, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("statescore.graph.4")) {cat()} else if(nrow(statescore.graph.4) > 0) {plot(statescore.plot.4)} else {cat()}
+<!--begin.rcode statescore.graph.4, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.4")) {cat()} else if(nrow(statescore.graph.4) > 0) {cat("<h2>Writing</h2>")
+																				 plot(statescore.plot.4)
+																				} else {cat()}
 end.rcode-->
-<!--begin.rcode statescore.graph.5, fig.width=8, fig.height=5, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) {plot(statescore.plot.5)} else {cat()}
+<!--begin.rcode statescore.graph.5, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) {cat("<h2>Social Studies</h2>")
+																				 plot(statescore.plot.5)
+																				} else {cat()}
 end.rcode-->
 </p>
 </div>
 <div align= "center">
-<h2>MAP Results</h2>
+<h1>MAP Results</h1>
 </div>
 <div align= "center">
 <p>
@@ -79,4 +87,3 @@ end.rcode-->
 </p>
 </div>
 </div>
-</body>
