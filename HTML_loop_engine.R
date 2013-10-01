@@ -149,8 +149,12 @@ quartile.mod$Sub_Test_Name <- factor(quartile.mod$Sub_Test_Name,
 
 
 #generate order for bar sequence
-quartile.mod$sequence <- paste(quartile.mod$Season, quartile.mod$Grade_When_Taken_int)
-quartile.mod$Graph_Label <- reorder(quartile.mod$Graph_Label,quartile.mod$sequence)
+quartile.mod$sequence <- paste(quartile.mod$Grade_When_Taken_int, quartile.mod$Season)
+
+#quartile.mod$Graph_Label <- reorder(quartile.mod$Graph_Label,quartile.mod$sequence)
+#F*ck it.
+ordered_labels<- reorder(unique(quartile.mod$Graph_Label), c(10, 11, 12, 13, 14, 6, 7, 9, 8, 1, 2, 4, 5, 3))
+
 #generate labels for graph
 quartile.mod$label <- abs(quartile.mod$percent_at_quartile)
 
@@ -207,8 +211,6 @@ demographics.mod <- rename(demographics.mod, replace=c("Male_Students_Percent" =
                                                        "F_and_R_Meals_Percent" = "Percent Free and Reduced Price Lunch"
                                                  ))
 demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,11,9,10)]
-demographics.mod[c(1,2,3,4,5,6,7,8,9,10,11)] <- as.character(demographics.mod[c(1,2,3,4,5,6,7,8,9,10,11)])
-demographics.mod[c(1,2,3,4,5,6,7,8,9,10,11)] <- lapply(demographics.mod[c(1,2,3,4,5,6,7,8,9,10,11)], cat(demographics.mod[c(1,2,3,4,5,6,7,8,9,10,11)],"%"))
                                                                                                                          
                                       
 
@@ -234,7 +236,7 @@ quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6")
 statescore.palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "#B9B9B9")
   
 #x <- c(94)
-x <- c(3, 5, 94, 105, 138)
+x <- c(3, 5, 52, 86)
 for(s in x){
 #for(s in school.list$School_ID){
   n <- school.list[school.list$School_ID == s,]
@@ -256,6 +258,9 @@ quartile.graph <- ddply(quartile.graph, .(Graph_Label, Sub_Test_Name), transform
 quartile.graph <- ddply(quartile.graph, .(Graph_Label, Sub_Test_Name), transform, neg = sum(ifelse(order %in% c(1,2), label, 0)))
 quartile.graph$pos <- (quartile.graph$pos - quartile.graph$neg)
 
+x_labels <- subset(ordered_labels, ordered_labels %in% unique(quartile.graph$Graph_Label))
+x_labels <- factor(x_labels)
+
 #calculates bar spacing
 #max <- 6 #NOTE TO SELF: find a way to make this dynamic...
 #bar <- nrow(e) / 8
@@ -275,14 +280,14 @@ q2$quartile <- factor(q2$quartile,levels = rev(q2$quartile[order(q2$order)]),ord
 #plot graph
 quartile.plot <- ggplot(quartile.graph)
 quartile.plot <- quartile.plot + geom_bar(data = q1, 
-                                          aes(x=Graph_Label, 
+                                          aes(x=sequence, 
                                               y=percent_at_quartile, 
                                               fill=quartile, 
                                               order=order), 
                                               stat="identity", 
                                               width=0.5)
 quartile.plot <- quartile.plot + geom_bar(data = q2, 
-                                          aes(x=Graph_Label, 
+                                          aes(x=sequence, 
                                               y=percent_at_quartile, 
                                               fill=quartile, 
                                               order=order), 
@@ -315,7 +320,9 @@ quartile.plot <- quartile.plot + theme(axis.title.x = element_text(size = rel(1.
                                        panel.margin = unit(3, "cm"),
                                        panel.grid.major = element_blank(),
                                        panel.grid.minor = element_blank())
-quartile.plot <- quartile.plot + geom_text(aes(x=Graph_Label, y=pos, label = label), size = 8)
+
+quartile.plot <- quartile.plot + scale_x_discrete("Season", labels = levels(x_labels))
+quartile.plot <- quartile.plot + geom_text(aes(x=sequence, order = sequence, y=pos, label = label), size = 8)
 quartile.plot <- quartile.plot + guides(fill = guide_legend(nrow = 2))
 
 #################################set state score plot################################################
