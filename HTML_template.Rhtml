@@ -79,11 +79,21 @@ end.rcode-->
 <div align= "center">
 <h1>MAP Results</h1>
 </div>
+<div id="testdiv", align= "center">
+<!--begin.rcode growth.mathematics, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("growth.Mathematics")) {cat()}  else {cat("<h3>Percent Meeting Growth in Mathematics</h3>")
+cat("<p>",growth.Mathematics,"</p>")}
+end.rcode-->
+</div>
+<div id="testdiv", align= "center">
+<!--begin.rcode growth.reading, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("growth.Reading")) {cat()}  else {cat("<h3>Percent Meeting Growth in Reading</h3>")
+cat("<p>",growth.Reading,"</p>")}
+end.rcode-->
+</div>
 <div align= "center">
-<p>
 <!--begin.rcode quartile.graph, fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(nrow(quartile.graph) > 0) plot(quartile.plot) else cat("No grades were tested for the 2012-13 Academic Year")
 end.rcode-->
-</p>
 </div>
 </div>

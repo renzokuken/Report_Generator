@@ -44,10 +44,15 @@ school.query <- ("SELECT
             AND Year_Opened < 2012
             ")
 
+growth.query <- ("SELECT
+                      *
+                      FROM v_growth_NRT_RC2012_SL
+                      ")
+
 quartile.query <- ("SELECT
                         *
                         FROM v_School_Quartile_current_2012
-                        ")
+                  ")
     
 statescore.query <- ("SELECT
              State_Score_Header_ID
@@ -91,6 +96,7 @@ demographics.query <- ("SELECT
   
 school.raw <- sqlQuery(s, school.query, stringsAsFactors=FALSE)  
 quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
+growth.raw <- sqlQuery(rc, growth.query, stringsAsFactors=FALSE)
 statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
   
@@ -102,6 +108,7 @@ odbcClose(ss)
 
 dput(school.raw, paste(data.path,"school.raw.Rda", sep=""))
 dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
+dput(growth.raw, paste(data.path,"growth.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
 dput(demographics.raw, paste(data.path,"demographics.raw.Rda", sep=""))
   
@@ -113,6 +120,7 @@ while(formatdata == 1){
 #get data
 school.raw <- dget(paste(data.path,"school.raw.Rda", sep=""))
 quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
+growth.raw <- dget(paste(data.path,"growth.raw.Rda", sep=""))
 statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
 demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
 
@@ -123,6 +131,10 @@ school.list <- school.raw
 school.list$Display_Name <- gsub(":","",school.list$Display_Name)
 school.list$Display_Name <- gsub(",","",school.list$Display_Name)
 school.list$graph_name <- gsub(" ","_",school.list$Display_Name)
+
+############################################format growth data#######################################
+growth.mod <- growth.raw
+growth.mod$Percent_Met_Growth_Target <- paste(as.character(growth.mod$Percent_Met_Growth_Target), "%", sep="")
 
 ###########################################format quartile data######################################
 quartile.mod <- quartile.raw
@@ -151,9 +163,10 @@ quartile.mod$Sub_Test_Name <- factor(quartile.mod$Sub_Test_Name,
 #generate order for bar sequence
 quartile.mod$sequence <- paste(quartile.mod$Grade_When_Taken_int, quartile.mod$Season)
 
-#quartile.mod$Graph_Label <- reorder(quartile.mod$Graph_Label,quartile.mod$sequence)
+#Create section labels with proper order.
+#Ideally this would be solved by changing the levels order of the Graph_Label to the alphabetical order of sequence...
 #F*ck it.
-ordered_labels<- reorder(unique(quartile.mod$Graph_Label), c(10, 11, 12, 13, 14, 6, 7, 9, 8, 1, 2, 4, 5, 3))
+ordered_labels <- reorder(unique(quartile.mod$Graph_Label), c(10, 11, 12, 13, 14, 6, 7, 9, 8, 1, 2, 4, 5, 3))
 
 #generate labels for graph
 quartile.mod$label <- abs(quartile.mod$percent_at_quartile)
@@ -200,6 +213,9 @@ demographics.mod <- subset(demographics.mod, select=-c(Native_Students_Percent,
                                                        Pacific_Students_Percent,
                                                        TwoMoreRaces_Students_Percent
                                                        ))
+
+
+
 demographics.mod <- rename(demographics.mod, replace=c("Male_Students_Percent" = "Percent Male",
                                                        "Female_Students_Percent" = "Percent Female",
                                                        "White_Students_Percent" = "Percent White",
@@ -222,7 +238,7 @@ dput(demographics.mod, paste(data.path,"demographics.mod.Rda", sep=""))
 break
 }
 
-#########################################Generate HTML reports :D###################################
+#########################################Generate site-level HTML reports###################################
 while(publishdata_html == 1) {    
   
 #get data
@@ -248,7 +264,11 @@ for(s in x){
   
   print(s)
   print(n)
-  
+#############################################subset growth metrics###################################
+
+growth.Mathematics <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID == s) & (growth.mod$Sub_Test_Name == "Mathematics"))
+growth.Reading <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID == s) & (growth.mod$Sub_Test_Name == "Reading"))
+
 #############################################set quartile plot#######################################
 #calculates vertical position for bar labels
 quartile.graph <- subset(quartile.mod, School_ID == s)
@@ -376,8 +396,7 @@ for (sub in sublist){
 
                       assign(paste("statescore.plot.", sub, sep = ""), statescore.plot)
                       rm(statescore.graph.loop)
-
-}
+                    }
 
 #####################################Subset Demographics#############################################
   
@@ -385,6 +404,18 @@ demographics.graph <- subset(demographics.mod, School_ID == s)
 demographics.graph <- subset(demographics.graph, select=-c(School_ID, Display_Name))
 demographics.graph <- t(demographics.graph)
   
+
+#####################################Plot Demographics because why not##############################
+#
+#gender.variables <- names(demographics.graph) %in% c("Percent Male", "Percent Female")
+#demographics.variables <- names(demographics.graph) %in% c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other")
+#gender.graph <- subset(demographics.graph, select=gender.variables)
+#race.graph <- subset(demographics.graph, select=demographics.variables)
+#frl.graph <- subset(demographics.graph, select=c("Percent Free and Reduced Price Lunch"))
+#attrition.graph <- subset(demographics.graph, select=c("Percent Attrition"))
+#sped.graph <- subset(demographics.graph, select=c("Percent Special Needs"))
+#sped.graph$Anti <- (100 - sped.graph$Percent Special Needs)
+#
 #####################################Knit to HTML Template###########################################
 
 knit2html("HTML_template.Rhtml")
