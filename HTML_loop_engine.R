@@ -36,13 +36,44 @@ ss <- odbcConnect('State_Scores_prod')
   
 #Declare SQL Queries
 school.query <- ("SELECT
-             School_ID
+             S.School_ID
             ,Type
             ,Display_Name
-            FROM Schools.dbo.Schools
+            ,Web_URL
+            ,Address_1
+            ,Address_2
+            ,City
+            ,State
+            ,Zipcode
+            ,SP.Per_Pupil_Revenue
+            FROM Schools.dbo.Schools S
+            JOIN DP_Production.dbo.School_Profiles SP
+            ON S.School_ID = SP.School_ID
             WHERE Academic_Year_Closed IS NULL
             AND Year_Opened < 2012
+            AND PP_ID = 32
             ")
+
+#NOTE: need a separate query to the schools database, for cases where N School Leaders > 1
+schoolleader.query <- ("SELECT
+                     S.School_ID
+                    ,SL.first_name
+                    ,SL.last_name
+                    FROM Schools.dbo.Schools S
+                    JOIN Schools.dbo.Xref_School_Leader XSL
+                    ON S.School_ID = XSL.School_ID
+                    JOIN Schools.dbo.School_Leader SL
+                    ON XSL.School_Leader_ID = SL.School_Leader_ID
+                    WHERE Academic_Year_Closed IS NULL
+                    AND Year_Opened < 2012
+                    AND XSL.date_ended IS NULL
+                    ")
+
+attrition.query <- ("SELECT
+                          School_ID
+                          ,Attrition_Rate
+                          FROM v_Report_Card_Attrition
+                          ")
 
 growth.query <- ("SELECT
                       *
@@ -95,11 +126,13 @@ demographics.query <- ("SELECT
            ")
   
 school.raw <- sqlQuery(s, school.query, stringsAsFactors=FALSE)  
-quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
+schoolleader.raw <- sqlQuery(s, schoolleader.query, stringsAsFactors = FALSE)
 growth.raw <- sqlQuery(rc, growth.query, stringsAsFactors=FALSE)
+attrition.raw <- sqlQuery(rc, attrition.query, stringsAsFactors=FALSE)
+quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
 statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
-  
+
 
 odbcClose(s)
 odbcClose(rc)
@@ -107,8 +140,10 @@ odbcClose(ss)
 
 
 dput(school.raw, paste(data.path,"school.raw.Rda", sep=""))
-dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
+dput(schoolleader.raw, paste(data.path,"schoolleader.raw.Rda", sep=""))
 dput(growth.raw, paste(data.path,"growth.raw.Rda", sep=""))
+dput(attrition.raw, paste(data.path,"attrition.raw.Rda", sep=""))
+dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
 dput(demographics.raw, paste(data.path,"demographics.raw.Rda", sep=""))
   
@@ -119,18 +154,35 @@ while(formatdata == 1){
   
 #get data
 school.raw <- dget(paste(data.path,"school.raw.Rda", sep=""))
-quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
+schoolleader.raw <- dget(paste(data.path,"schoolleader.raw.Rda", sep=""))
 growth.raw <- dget(paste(data.path,"growth.raw.Rda", sep=""))
+attrition.raw <- dget(paste(data.path,"attrition.raw.Rda", sep=""))
+quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
 statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
 demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
 
 ###########################################format school data########################################
+school.mod <- school.raw
 #clean up school names
-school.list <- school.raw
+school.mod$Display_Name <- gsub(":","",school.mod$Display_Name)
+school.mod$Display_Name <- gsub(",","",school.mod$Display_Name)
+school.mod$graph_name <- gsub(" ","_",school.mod$Display_Name)
+#format mailing address
+school.mod$address <- paste(school.mod$Address_1," ", school.mod$Address_2," ", school.mod$City,", ", school.mod$State," ", as.character(school.mod$Zipcode), sep="")
 
-school.list$Display_Name <- gsub(":","",school.list$Display_Name)
-school.list$Display_Name <- gsub(",","",school.list$Display_Name)
-school.list$graph_name <- gsub(" ","_",school.list$Display_Name)
+
+
+############################################format school leader data################################
+schoolleader.mod <- schoolleader.raw
+
+
+
+############################################format attrition data####################################
+attrition.mod <- attrition.raw
+attrition.mod$Attrition_Rate <- round(attrition.mod$Attrition_Rate, digits = 0)
+attrition.mod$attrition_print <- paste(as.character(attrition.mod$Attrition_Rate), "%", sep="")
+
+
 
 ############################################format growth data#######################################
 growth.mod <- growth.raw
@@ -231,7 +283,10 @@ demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,11,9,10)]
                                       
 
 #save data
-dput(school.list, paste(data.path, "school.list.Rda", sep=""))
+dput(school.mod, paste(data.path, "school.mod.Rda", sep=""))
+dput(schoolleader.mod, paste(data.path, "schoolleader.mod.Rda", sep=""))
+dput(attrition.mod, paste(data.path, "attrition.mod.Rda", sep=""))
+dput(growth.mod, paste(data.path, "growth.mod.Rda", sep=""))
 dput(quartile.mod, paste(data.path, "quartile.mod.Rda", sep=""))
 dput(statescore.mod, paste(data.path,"statescore.mod.Rda", sep =""))
 dput(demographics.mod, paste(data.path,"demographics.mod.Rda", sep=""))
@@ -242,7 +297,10 @@ break
 while(publishdata_html == 1) {    
   
 #get data
-school.list <- dget(paste(data.path,"school.list.Rda", sep=""))
+school.mod <- dget(paste(data.path,"school.mod.Rda", sep=""))
+schoolleader.mod <- dget(paste(data.path,"schoolleader.mod.Rda", sep=""))
+attrition.mod <- dget(paste(data.path,"attrition.mod.Rda", sep=""))
+growth.mod <- dget(paste(data.path,"growth.mod.Rda", sep=""))
 quartile.mod <- dget(paste(data.path,"quartile.mod.Rda", sep=""))
 statescore.mod <- dget(paste(data.path,"statescore.mod.Rda", sep=""))
 demographics.mod <- dget(paste(data.path,"demographics.mod.Rda", sep=""))
@@ -254,16 +312,25 @@ statescore.palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "
 #x <- c(94)
 x <- c(3, 5, 52, 86)
 for(s in x){
-#for(s in school.list$School_ID){
-  n <- school.list[school.list$School_ID == s,]
+#for(s in school.mod$School_ID){
+  n <- school.mod[school.mod$School_ID == s,]
   n <- n$graph_name
-  d <- school.list[school.list$School_ID == s,]
+  d <- school.mod[school.mod$School_ID == s,]
   d <- d$Display_Name
-  t <- school.list[school.list$School_ID == s,]
+  t <- school.mod[school.mod$School_ID == s,]
   t <- t$Type
+  ppf <- school.mod[school.mod$School_ID == s,]
+  ppf <- ppf$Per_Pupil_Revenue
+  school.address <- school.mod[school.mod$School_ID == s,]
+  school.address <- school.address$address
+  school.url <- school.mod[school.mod$School_ID == s,]
+  school.url <- school.url$Web_URL
   
   print(s)
   print(n)
+#############################################subset attrition data###################################
+attrition.print <- subset(attrition.mod$attrition_print, (attrition.mod$School_ID == s))
+
 #############################################subset growth metrics###################################
 
 growth.Mathematics <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID == s) & (growth.mod$Sub_Test_Name == "Mathematics"))

@@ -1,13 +1,6 @@
 
 
 <div id = "border", align = "center">
-<div align= "center">
-<h1>
-<!--begin.rcode site.name, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-cat(d)
-end.rcode-->
-</h1>
-</div>
 <div align= "right">
 <p>
 <!--begin.rcode time.stamp, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
@@ -16,22 +9,38 @@ end.rcode-->
 </p>
 </div>
 <div align= "center">
-<p>This is the prototype Report Card Verification Template. All Graphs are generated procedurally by an R loop and exported into the HTML template.<br />
+<h1>
+<!--begin.rcode site.name, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat(d)
+end.rcode-->
+</h1>
+</div>
+<div align= "center">
+<p>
+<!--begin.rcode school.contact, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat("<em>","<strong>",school.address,"</strong>","</em>","<br />")
+cat("<strong>",school.url,"</strong>")
+end.rcode-->
+</p>
+</div>
+<div align= "center">
+<p>This is the prototype Report Card Verification Template. All Graphs and data are pulled, formatted and visualized in R, and then exported into an HTML/CSS template. Shit be hella tight.<br />
 <br />
 <strong>-MH</strong></p>
 <p>To Do List: <br />
 <ul>
-<li>Pull in School Leader, Real Estate, FTE, PPF, and Attrition data. Need to query, transform and viz.</li>
-<li>Pull in High School data where relevant. FIXED: Can be done with conditional headers!</li>
-<li>Find a way to handle footnotes. Probably via CSV.</li>
-<li>Pull in MAP growth. Easy.</li>
+<li>Pull in School Leader Info</li>
+<li>Pull in Attainment Data.</li>
+<li>Create repo for footnotes, and pull in. Probably via CSV.</li>
+<li>Visualize Percentages (maybe.)</li>
+<li>Make this thing look a little less gimp.</li>
 </ul>
 </p>
 </div>
 <div align= "center">
 <h2>School Demographics</h2>
 </div>
-<div id="tableborder", align= "center">
+<div align= "center">
 <!--begin.rcode demographics.table, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
 data(demographics.graph)
 demographics.table <- xtable(demographics.graph)
@@ -39,6 +48,17 @@ end.rcode-->
 
 <!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 print(demographics.table, include.rownames=TRUE, include.colnames=FALSE, type="html")
+end.rcode-->
+</div>
+<div id ="embolden" align= "center">
+<!--begin.rcode attrition.print, out.width = 4, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat("<h2>Attrition Rate</h2>")
+cat("<p>",attrition.print,"</p>")
+end.rcode-->
+<div id ="embolden" align= "center">
+<!--begin.rcode ppf.rate, out.width = 4, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat("<h2>Per Pupil Funding</h2>")
+if(!exists("ppf")) {cat()} else {cat("<p>",ppf,"</p>")}
 end.rcode-->
 </div>
 <div align= "center">
@@ -79,13 +99,13 @@ end.rcode-->
 <div align= "center">
 <h1>MAP Results</h1>
 </div>
-<div id="testdiv", align= "center">
+<div id="embolden", align= "center">
 <!--begin.rcode growth.mathematics, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(!exists("growth.Mathematics")) {cat()}  else {cat("<h3>Percent Meeting Growth in Mathematics</h3>")
 cat("<p>",growth.Mathematics,"</p>")}
 end.rcode-->
 </div>
-<div id="testdiv", align= "center">
+<div id="embolden", align= "center">
 <!--begin.rcode growth.reading, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(!exists("growth.Reading")) {cat()}  else {cat("<h3>Percent Meeting Growth in Reading</h3>")
 cat("<p>",growth.Reading,"</p>")}
