@@ -6,7 +6,7 @@ wd <- getwd()
 if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator")
 #Declare globals
 
-pulldata <- 0
+pulldata <- 1
 
 formatdata <- 1
 
@@ -32,6 +32,7 @@ while(pulldata == 1) {
 #Declare ODBC connections
 s <- odbcConnect('Schools_prod')
 rc <- odbcConnect('Report_Card_prod')
+as <- odbcConnect('Attainment_stage')
 ss <- odbcConnect('State_Scores_prod')
   
 #Declare SQL Queries
@@ -54,9 +55,10 @@ school.query <- ("SELECT
             AND PP_ID = 32
             ")
 
-#NOTE: need a separate query to the schools database, for cases where N School Leaders > 1
+#NOTE: need a separate query to the schools database for cases where N School Leaders > 1
 schoolleader.query <- ("SELECT
                      S.School_ID
+                    ,SL.school_leader_id
                     ,SL.first_name
                     ,SL.last_name
                     FROM Schools.dbo.Schools S
@@ -74,6 +76,27 @@ attrition.query <- ("SELECT
                           ,Attrition_Rate
                           FROM v_Report_Card_Attrition
                           ")
+
+fte.query <- ("SELECT
+                  School_ID
+                  ,Cluster_ID
+                  ,FTE
+                  ,REPORT_CARD_2012
+                  FROM v_Teacher_Counts_By_Academic_Year_Region_RC2012
+                  ")
+
+retention.query <- ("SELECT
+                        Teacher_ID
+                        ,School_ID
+                        ,Cluster_ID
+                        ,Teaching_Start_Date
+                        ,Teaching_End_Date
+                        ,Went_Id
+                        FROM v_Teacher_Retention_2012
+                        ")
+
+##Note I kept this query on a separate file because it's FUCKING HUGE.
+#source("Attainment_query")
 
 growth.query <- ("SELECT
                       *
@@ -110,6 +133,7 @@ statescore.query <- ("SELECT
 demographics.query <- ("SELECT 
             School_ID
            ,Display_Name
+           ,Total_Students_Num
            ,Male_Students_Percent
            ,Female_Students_Percent
            ,Black_Students_Percent
@@ -129,6 +153,8 @@ school.raw <- sqlQuery(s, school.query, stringsAsFactors=FALSE)
 schoolleader.raw <- sqlQuery(s, schoolleader.query, stringsAsFactors = FALSE)
 growth.raw <- sqlQuery(rc, growth.query, stringsAsFactors=FALSE)
 attrition.raw <- sqlQuery(rc, attrition.query, stringsAsFactors=FALSE)
+fte.raw <- sqlQuery(rc, fte.query, stringsAsFactors=FALSE)
+retention.raw <- sqlQuery(rc, retention.query, stringsAsFactors=FALSE)
 quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
 statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
@@ -141,8 +167,10 @@ odbcClose(ss)
 
 dput(school.raw, paste(data.path,"school.raw.Rda", sep=""))
 dput(schoolleader.raw, paste(data.path,"schoolleader.raw.Rda", sep=""))
-dput(growth.raw, paste(data.path,"growth.raw.Rda", sep=""))
 dput(attrition.raw, paste(data.path,"attrition.raw.Rda", sep=""))
+dput(fte.raw, paste(data.path,"fte.raw.Rda", sep=""))
+dput(retention.raw, paste(data.path,"retention.raw.Rda", sep=""))
+dput(growth.raw, paste(data.path,"growth.raw.Rda", sep=""))
 dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
 dput(demographics.raw, paste(data.path,"demographics.raw.Rda", sep=""))
@@ -155,8 +183,10 @@ while(formatdata == 1){
 #get data
 school.raw <- dget(paste(data.path,"school.raw.Rda", sep=""))
 schoolleader.raw <- dget(paste(data.path,"schoolleader.raw.Rda", sep=""))
-growth.raw <- dget(paste(data.path,"growth.raw.Rda", sep=""))
 attrition.raw <- dget(paste(data.path,"attrition.raw.Rda", sep=""))
+fte.raw <- dget(paste(data.path,"fte.raw.Rda", sep=""))
+retention.raw <- dget(paste(data.path,"retention.raw.Rda", sep=""))
+growth.raw <- dget(paste(data.path,"growth.raw.Rda", sep=""))
 quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
 statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
 demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
