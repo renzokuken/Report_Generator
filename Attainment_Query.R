@@ -55,6 +55,8 @@ INSERT INTO #tt_Region_Lookup (Region_ID, Salesforce_ID, Region_Name)
 ,(7500,'0018000000etIHGAA2','KIPP Minneapolis')
 ,(17,'0018000000etIH9AAM','KIPP Central Ohio')
 
+SELECT * FROM #tt_Region_Lookup
+
 
 /*******Pulls in Middle School Completers********/
 SELECT C.Id

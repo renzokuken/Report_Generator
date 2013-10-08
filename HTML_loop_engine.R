@@ -6,7 +6,7 @@ wd <- getwd()
 if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator")
 #Declare globals
 
-pulldata <- 1
+pulldata <- 0
 
 formatdata <- 1
 
@@ -340,7 +340,7 @@ quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6")
 statescore.palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "#B9B9B9")
   
 #x <- c(94)
-x <- c(3, 5, 52, 86)
+x <- c(3, 5, 52, 86, 72, 94)
 for(s in x){
 #for(s in school.mod$School_ID){
   n <- school.mod[school.mod$School_ID == s,]
@@ -374,6 +374,9 @@ quartile.graph <- subset(quartile.mod, School_ID == s)
 quartile.graph <- ddply(quartile.graph, .(Graph_Label, Sub_Test_Name), transform, pos = (((cumsum(label)) - 0.5*label)))
 quartile.graph <- ddply(quartile.graph, .(Graph_Label, Sub_Test_Name), transform, neg = sum(ifelse(order %in% c(1,2), label, 0)))
 quartile.graph$pos <- (quartile.graph$pos - quartile.graph$neg)
+
+quartile.graph$label <- as.character(quartile.graph$label)
+quartile.graph$label[as.integer(quartile.graph$label) < 5] <- ""
 
 x_labels <- subset(ordered_labels, ordered_labels %in% unique(quartile.graph$Graph_Label))
 x_labels <- factor(x_labels)
@@ -417,14 +420,13 @@ quartile.plot <- quartile.plot + scale_fill_manual(values = quartile.palette,
                                                               "Percent Below 25 NPR"))
 quartile.plot <- quartile.plot + facet_grid(~ Sub_Test_Name)
 quartile.plot <- quartile.plot + xlab('Season')
-quartile.plot <- quartile.plot + ylab('Quartile Distribution')
 quartile.plot <- quartile.plot + theme(axis.title.x = element_text(size = rel(1.8)),
                                        axis.ticks.x = element_blank(),
-                                       axis.text.x = element_text(size = rel(1.8), angle=30), 
+                                       axis.text.x = element_text(size = rel(1.8), angle=30, color = "#4F4F4F"), 
                                        strip.text.x = element_text(size = rel(2.5), face='bold', color = "#FEBC11"),
-                                       axis.title.y = element_text(size = rel(1.8)), 
+                                       axis.title.y = element_blank(), 
                                        axis.ticks.y = element_blank(),
-                                       strip.text.y = element_text(size = rel(2.5), face='bold'),
+                                       strip.text.y = element_blank(),
                                        axis.text.y=element_blank(),
                                        legend.background = element_rect(),
                                        legend.margin = unit(1, "cm"),
@@ -453,6 +455,14 @@ for (sub in sublist){
                       statescore.graph.loop <- assign(paste("statescore.graph.", sub, sep = ""),subset(statescore.graph, Subtest_Cat_RC_ID == sub))
 
                       statescore.graph.loop$label <- ifelse(statescore.graph.loop$Score_Grouping_Cat_ID == 2, "", statescore.graph.loop$label)
+
+                      label_wrap <- function(width = 100) {
+                                                                function(variable, value) {
+                                                                                           inter <- lapply(strwrap(as.character(value), width=width, simplify=FALSE), 
+                                                                                           paste, collapse="\n")
+                                                                                           inter <- gsub(paste0("(.{",width,"})"), "\\1\n",inter)
+                                                                                          }
+                                                                }
   
                       statescore.plot <- ggplot(statescore.graph.loop, aes(x=reorder(score_level, order), y=score, fill=score_stack))
                       statescore.plot <- statescore.plot + geom_bar(stat="identity", width=1, order=order)
@@ -461,7 +471,7 @@ for (sub in sublist){
 #I may need to break this out by subject...
 #swap formatting for high school CRT tests
 #if(t=="H")  statescore.plot <- statescore.plot + facet_wrap(Subtest_Name ~ Grade, ncol = 4) else statescore.plot <- statescore.plot + facet_grid(~ Subtest_Name ~ Grade)
-                      statescore.plot <- statescore.plot + facet_grid(Subtest_Cat_RC_ID ~ Grade)
+                      statescore.plot <- statescore.plot + facet_grid(Subtest_Cat_RC_ID ~ Grade, labeller = label_wrap(width=12))
 
                       statescore.plot <- statescore.plot + coord_equal(ratio = 0.07)
                       statescore.plot <- statescore.plot + scale_y_continuous(limits = c(0, 120))
@@ -471,7 +481,7 @@ for (sub in sublist){
                       statescore.plot <- statescore.plot + theme(axis.title.x = element_blank(),
                                                                  axis.ticks.x = element_blank(),
                                                                  axis.text.x = element_blank(),
-                                                                 strip.text.x = element_text(size = rel(2.2), face = 'bold', color = "#616161"),
+                                                                 strip.text.x = element_text(size = rel(2.2), face = 'bold', color = "#4F4F4F"),
                                                                  axis.title.y = element_blank(),
                                                                  axis.text.y = element_blank(),
                                                                  axis.ticks.y = element_blank(),
@@ -510,12 +520,13 @@ demographics.graph <- t(demographics.graph)
 #race.graph <- subset(demographics.graph, select=demographics.variables)
 #frl.graph <- subset(demographics.graph, select=c("Percent Free and Reduced Price Lunch"))
 #attrition.graph <- subset(demographics.graph, select=c("Percent Attrition"))
+#attrition.graph$anti <- (100 - attrition.graph$"Percent Attrition")
 #sped.graph <- subset(demographics.graph, select=c("Percent Special Needs"))
-#sped.graph$Anti <- (100 - sped.graph$Percent Special Needs)
+#sped.graph$anti <- (100 - sped.graph$"Percent Special Needs")
 #
 #####################################Knit to HTML Template###########################################
 
-knit2html("HTML_template.Rhtml")
+knit2html("HTML_template.Rhtml", encoding = 'UTF-8')
 #hatersgonnahate.jpg
 filename <- paste(report.path,n,"_HTML_Template", sep="")
 file.rename(from="HTML_template.html",to=paste(report.path,n,"_HTML_Template.html", sep=""))
@@ -532,6 +543,7 @@ if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) 
 #set I/O variables
 input <- paste(report.path,n,"_HTML_Template.html", sep="")
 output <- paste(report.path,n,"_HTML_Template.pdf", sep="")
+#Encoding(output) <- "UTF-8"
 
 #updates Batch file. NOTE: This file lives in the wkhtmltopdf directory.
 fileConn<-file("C:/Program Files (x86)/wkhtmltopdf/pdf_send.bat")
