@@ -40,10 +40,37 @@ end.rcode-->
 <div class="header", align= "center">
 <h1>School Demographics</h1>
 </div>
-<div align= "center">
+<div id="demographics.graph", align="center">
+<table style="width:800px">
+<tr style="height:200px;">
+<td style="height:200px; width:200px;">
+<!--begin.rcode attrition.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+plot(attrition.plot)
+end.rcode-->
+</td>
+<td style="height:200px; width:200px;">
+<!--begin.rcode frl.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+plot(frl.plot)
+end.rcode-->
+</td>
+<td style="height:200px; width:200px;">
+<!--begin.rcode attrition2.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+plot(attrition.plot)
+end.rcode-->
+</td>
+<td style="height:200px; width:200px;">
+<!--begin.rcode frl2.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+plot(frl.plot)
+end.rcode-->
+</td>
+</tr>
+</table>
+</div>
+
+<div id="demographics.table", align="center">
 <!--begin.rcode demographics.table, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
 data(demographics.graph)
-demographics.table <- xtable(demographics.graph)
+demographics.table <- xtable(demographics.table)
 end.rcode-->
 
 <!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
@@ -56,6 +83,7 @@ end.rcode-->
 cat("<h2>Attrition Rate</h2>")
 cat("<p>",attrition.print,"</p>")
 end.rcode-->
+
 </div>
 <div class="right", align="center">
 <!--begin.rcode ppf.rate, out.width = 4, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
@@ -65,7 +93,7 @@ end.rcode-->
 </div>
 </div>
 <div class="clear"></div>
-<div class="header", align= "center">
+<div class="header-break", align= "center">
 <h1>CRT Results</h1>
 </div>
 <div align= "center">
@@ -83,6 +111,10 @@ if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) 
 																				 plot(statescore.plot.2)
 																				} else {cat()}
 end.rcode-->
+</p>
+</div>
+<p>
+<div class="header-break", align="center">
 <!--begin.rcode statescore.graph.3, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(!exists("statescore.graph.3")) {cat()} else if(nrow(statescore.graph.3) > 0) {cat("<h2>Science</h2>")
 																				 plot(statescore.plot.3)

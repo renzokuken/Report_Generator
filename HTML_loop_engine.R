@@ -149,7 +149,7 @@ demographics.query <- ("SELECT
            WHERE PP_ID = 32
            ")
   
-school.raw <- sqlQuery(s, school.query, stringsAsFactors=FALSE)  
+school.raw <- sqlQuery(s, school.query, stringsAsFactors=FALSE)
 schoolleader.raw <- sqlQuery(s, schoolleader.query, stringsAsFactors = FALSE)
 growth.raw <- sqlQuery(rc, growth.query, stringsAsFactors=FALSE)
 attrition.raw <- sqlQuery(rc, attrition.query, stringsAsFactors=FALSE)
@@ -158,7 +158,7 @@ retention.raw <- sqlQuery(rc, retention.query, stringsAsFactors=FALSE)
 quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
 statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
-
+footnotes.raw <- read.csv(paste(data.path,"footnotes.csv", sep=""), header=TRUE)
 
 odbcClose(s)
 odbcClose(rc)
@@ -174,6 +174,7 @@ dput(growth.raw, paste(data.path,"growth.raw.Rda", sep=""))
 dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
 dput(demographics.raw, paste(data.path,"demographics.raw.Rda", sep=""))
+dput(footnotes.raw, paste(data.path,"footnotes.raw.Rda", sep=""))
   
 break
 }
@@ -190,6 +191,7 @@ growth.raw <- dget(paste(data.path,"growth.raw.Rda", sep=""))
 quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
 statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
 demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
+footnotes.raw <- dget(paste(data.path,"footnotes.raw.Rda", sep=""))
 
 ###########################################format school data########################################
 school.mod <- school.raw
@@ -214,6 +216,9 @@ attrition.mod$attrition_print <- paste(as.character(attrition.mod$Attrition_Rate
 
 
 
+############################################format footnotes if needed###############################
+footnotes.mod <- footnotes.raw
+
 ############################################format growth data#######################################
 growth.mod <- growth.raw
 growth.mod$Percent_Met_Growth_Target <- paste(as.character(growth.mod$Percent_Met_Growth_Target), "%", sep="")
@@ -233,6 +238,8 @@ quartile.mod <- reshape(quartile.mod,
                     times = c("Percent_Below_25_NPR", "Percent_At_25_Below_50_NPR", "Percent_At_50_Below_75_NPR", "Percent_At_Above_75_NPR"),
                     new.row.names = 1:5000,
                     direction = "long")
+
+
 
 #generate order for bar stacking
 quartile.mod$order <- ifelse(quartile.mod$quartile == "Percent_At_Above_75_NPR", 4, ifelse(quartile.mod$quartile == "Percent_At_50_Below_75_NPR", 3, ifelse(quartile.mod$quartile == "Percent_At_25_Below_50_NPR",1, 2)))
@@ -306,7 +313,8 @@ demographics.mod <- rename(demographics.mod, replace=c("Male_Students_Percent" =
                                                        "Asian_Students_Percent" = "Percent Asian",
                                                        "other_percent" = "Percent Other",
                                                        "Special_Needs_Percent" = "Percent Special Needs",
-                                                       "F_and_R_Meals_Percent" = "Percent Free and Reduced Price Lunch"
+                                                       "F_and_R_Meals_Percent" = "Percent Free and Reduced Price Lunch",
+                                                       "Total_Students_Num" = "Total Students"
                                                  ))
 demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,11,9,10)]
                                                                                                                          
@@ -320,6 +328,7 @@ dput(growth.mod, paste(data.path, "growth.mod.Rda", sep=""))
 dput(quartile.mod, paste(data.path, "quartile.mod.Rda", sep=""))
 dput(statescore.mod, paste(data.path,"statescore.mod.Rda", sep =""))
 dput(demographics.mod, paste(data.path,"demographics.mod.Rda", sep=""))
+dput(footnotes.mod, paste(data.path,"footnotes.mod.Rda", sep=""))
 break
 }
 
@@ -334,15 +343,16 @@ growth.mod <- dget(paste(data.path,"growth.mod.Rda", sep=""))
 quartile.mod <- dget(paste(data.path,"quartile.mod.Rda", sep=""))
 statescore.mod <- dget(paste(data.path,"statescore.mod.Rda", sep=""))
 demographics.mod <- dget(paste(data.path,"demographics.mod.Rda", sep=""))
+footnotes.mod <- dget(paste(data.path,"footnotes.mod.Rda", sep=""))
 
 #set color palettes
 quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6") 
 statescore.palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "#B9B9B9")
   
 #x <- c(94)
-x <- c(3, 5, 52, 86, 72, 94)
-for(s in x){
-#for(s in school.mod$School_ID){
+#x <- c(3, 5, 52, 86, 72, 94)
+#for(s in x){
+for(s in school.mod$School_ID){
   n <- school.mod[school.mod$School_ID == s,]
   n <- n$graph_name
   d <- school.mod[school.mod$School_ID == s,]
@@ -468,11 +478,7 @@ for (sub in sublist){
                       statescore.plot <- statescore.plot + geom_bar(stat="identity", width=1, order=order)
                       #statescore.plot <- statescore.plot + scale_fill_manual(values = statescore.palette, breaks = c("School Percent Advanced", "School Percent Proficient", "District Percent Advanced", "District Percent Proficient", "State Percent Advanced", "State Percent Proficient"))
                       statescore.plot <- statescore.plot + scale_fill_manual(values = statescore.palette, breaks = c(unique(statescore.graph.loop$score_stack)))
-#I may need to break this out by subject...
-#swap formatting for high school CRT tests
-#if(t=="H")  statescore.plot <- statescore.plot + facet_wrap(Subtest_Name ~ Grade, ncol = 4) else statescore.plot <- statescore.plot + facet_grid(~ Subtest_Name ~ Grade)
                       statescore.plot <- statescore.plot + facet_grid(Subtest_Cat_RC_ID ~ Grade, labeller = label_wrap(width=12))
-
                       statescore.plot <- statescore.plot + coord_equal(ratio = 0.07)
                       statescore.plot <- statescore.plot + scale_y_continuous(limits = c(0, 120))
                       #statescore.plot <- statescore.plot + coord_fixed(ratio = 0.05)
@@ -507,9 +513,9 @@ for (sub in sublist){
 
 #####################################Subset Demographics#############################################
   
-demographics.graph <- subset(demographics.mod, School_ID == s)
+demographics.graph <- subset(demographics.mod, (School_ID) == s)
 demographics.graph <- subset(demographics.graph, select=-c(School_ID, Display_Name))
-demographics.graph <- t(demographics.graph)
+demographics.table <- t(demographics.graph)
   
 
 #####################################Plot Demographics because why not##############################
@@ -518,9 +524,78 @@ demographics.graph <- t(demographics.graph)
 #demographics.variables <- names(demographics.graph) %in% c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other")
 #gender.graph <- subset(demographics.graph, select=gender.variables)
 #race.graph <- subset(demographics.graph, select=demographics.variables)
-#frl.graph <- subset(demographics.graph, select=c("Percent Free and Reduced Price Lunch"))
-#attrition.graph <- subset(demographics.graph, select=c("Percent Attrition"))
-#attrition.graph$anti <- (100 - attrition.graph$"Percent Attrition")
+frl.graph <- subset(demographics.graph, select=c("Percent Free and Reduced Price Lunch"))
+frl.graph$anti <- (100 - frl.graph$"Percent Free and Reduced Price Lunch")
+frl.graph <- reshape(frl.graph,
+                      varying = c("Percent Free and Reduced Price Lunch", "anti"),
+                      v.names = "frl",
+                      timevar = "bucket",
+                      times = c("Percent Free and Reduced Price Lunch", "anti"),
+                      new.row.names = 1:5000,
+                      direction = "long")
+frl.graph$fraction = frl.graph$frl / sum(frl.graph$frl)
+frl.graph <- frl.graph[order(frl.graph$fraction, decreasing=TRUE), ]
+frl.graph$ymax <- cumsum(frl.graph$fraction)
+frl.graph$ymin <- c(0, head(frl.graph$ymax, n=-1))
+#time to make the doughnuts. *rimshot*
+frl.plot <- ggplot(frl.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+frl.plot <- frl.plot + geom_rect()
+frl.plot <- frl.plot + coord_polar(theta="y")
+frl.plot <- frl.plot + xlim(c(0, 4))
+frl.plot <- frl.plot + labs(title="FRL Rate")
+frl.plot <- frl.plot + theme(axis.ticks.x = element_blank(),
+                                         axis.text.x = element_blank(),
+                                         strip.text.x = element_blank(),
+                                         axis.text.y = element_blank(),
+                                         axis.ticks.y = element_blank(),
+                                         strip.text.y = element_blank(),
+                                         legend.position = "none",
+                                         strip.background = element_blank(),
+                                         plot.background = element_blank(),
+                                         plot.title = element_text(size = rel(3), face='bold', color = "#FEBC11"),
+                                         strip.background = element_blank(),
+                                         panel.background = element_blank(),
+                                         panel.grid.major = element_blank(),
+                                         panel.grid.minor = element_blank())
+
+attrition.graph <- subset(attrition.mod, School_ID == s)
+
+attrition.graph$anti <- (100 - attrition.graph$Attrition_Rate)
+attrition.graph <- reshape(attrition.graph,
+                      varying = c("Attrition_Rate", "anti"),
+                      v.names = "attrition",
+                      timevar = "bucket",
+                      times = c("Attrition_Rate", "anti"),
+                      new.row.names = 1:5000,
+                      direction = "long")
+attrition.graph$fraction = attrition.graph$attrition / sum(attrition.graph$attrition)
+attrition.graph <- attrition.graph[order(attrition.graph$fraction), ]
+attrition.graph$ymax <- cumsum(attrition.graph$fraction)
+attrition.graph$ymin <- c(0, head(attrition.graph$ymax, n=-1))
+#time to make the doughnuts. *rimshot*
+attrition.plot <- ggplot(attrition.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+attrition.plot <- attrition.plot + geom_rect()
+attrition.plot <- attrition.plot + coord_polar(theta="y")
+attrition.plot <- attrition.plot + xlim(c(0, 4))
+attrition.plot <- attrition.plot + labs(title="Attrition")
+attrition.plot <- attrition.plot + theme(axis.ticks.x = element_blank(),
+                                         axis.text.x = element_blank(),
+                                         strip.text.x = element_blank(),
+                                         axis.text.y = element_blank(),
+                                         axis.ticks.y = element_blank(),
+                                         strip.text.y = element_blank(),
+                                         legend.position = "none",
+                                         strip.background = element_blank(),
+                                         plot.background = element_blank(),
+                                         plot.title = element_text(size = rel(3), face='bold', color = "#FEBC11"),
+                                         strip.background = element_blank(),
+                                         panel.background = element_blank(),
+                                         panel.grid.major = element_blank(),
+                                         panel.grid.minor = element_blank())
+#attrition.plot <- attrition.plot + geom_text(aes(label = attrition.print, x = 0, y = 0), size = 42)
+
+
+
 #sped.graph <- subset(demographics.graph, select=c("Percent Special Needs"))
 #sped.graph$anti <- (100 - sped.graph$"Percent Special Needs")
 #
@@ -543,7 +618,6 @@ if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) 
 #set I/O variables
 input <- paste(report.path,n,"_HTML_Template.html", sep="")
 output <- paste(report.path,n,"_HTML_Template.pdf", sep="")
-#Encoding(output) <- "UTF-8"
 
 #updates Batch file. NOTE: This file lives in the wkhtmltopdf directory.
 fileConn<-file("C:/Program Files (x86)/wkhtmltopdf/pdf_send.bat")
