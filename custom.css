@@ -1,0 +1,243 @@
+h1{
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+    color:#FEBC11;
+    font-size:32px;
+    line-height:34px;
+    letter-spacing:0px;
+    padding: 0px 0 0 0;
+}
+h2 {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+    color:#FEBC11;
+    font-size:26px;
+    line-height:30px;
+    letter-spacing:0px;
+    page-break-after: avoid; 
+}
+h3 {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+    color:#FEBC11;
+    font-size:20px;
+    line-height:24px;
+    orphans: 3; widows: 3; 
+    page-break-after: avoid;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+p {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:0px;
+  padding:0px 0 0 0;
+  orphans: 3; widows: 3;
+}
+ul {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:0px;
+  width:600px;
+  padding:0px 0 0 0;
+}
+li {
+  font-family: inherit;
+  color: inherit;
+  font-size: inherit;
+  text-align: left;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+a, a:visited { 
+      text-decoration: underline; 
+}
+hr { 
+  visibility: hidden;
+  page-break-before: always;
+}
+pre, blockquote { 
+  padding-right: 1em; 
+  page-break-inside: avoid; 
+}
+
+table{
+  border-collapse: separate;
+  border-spacing: 1em 0.5em;
+  background-color: #FFFFFF;
+  color: #4F4F4F;
+  font-size:18px;
+  line-height:0px;
+  letter-spacing:0px;
+  width:350px;
+  padding:4px 4 4 4;
+  border: 2px solid #a1a1a1;
+  border-radius: 25px;
+}
+
+td {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  text-align: left;
+  color:#4F4F4F;
+  font-size:16px;
+  border:none;
+  margin: 8px;
+  letter-spacing:0px;
+  line-height: 20px;
+  padding:0px 0 0 0;
+}
+tr, img { 
+      page-break-inside: avoid; 
+      line-height: 2px;
+      background-color: #FFFFFF;
+      border:none;
+}
+/*
+#demographics.graph{
+  border-collapse: separate;
+  border-spacing: 1em 0.5em;
+  background-color: #FFFFFF;
+  color: #4F4F4F;
+  font-size:18px;
+  line-height:0px;
+  letter-spacing:0px;
+  width:800px;
+  padding:4px 4 4 4;
+  border: none;
+}
+*/
+img { 
+      max-width: 100% !important;
+      page-break-before: avoid; 
+}
+/*
+@page :left { 
+  margin: 15mm 20mm 15mm 10mm; 
+}
+     
+@page :right { 
+  margin: 15mm 10mm 15mm 20mm; 
+}
+*/
+.header {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+  padding: 0px 0 0 0;
+}
+
+.header-break {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+  padding: 0px 0 0 0;
+  page-break-before: always;
+}
+.piecharts {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:32px;
+  line-height:36px;
+  letter-spacing:0px;
+  width: 100%;
+  padding:0px 0 0 0;
+}
+.pieleft { 
+  width: 25%;
+  position: absolute;
+  left: 10px;
+  width: 200px;
+  text-align:center; 
+  display:inline; 
+}
+.piemidleft{
+  width: 25%;
+  position: absolute;
+  left: 220px;
+  width:200px;
+  text-align:center; 
+  display:inline; 
+}
+.piemidright{
+  width: 25%; 
+  position: absolute;
+  left: 430px;
+  width:200px;
+  position:absolute;
+  text-align:center; 
+  display:inline;
+}
+.pieright { 
+  width: 25%; 
+  position: absolute;
+  left: 640px;
+  width:200px;
+  text-align:center; 
+  display:inline;
+  padding-right:10px;
+}
+
+
+
+
+.embolden p{
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:32px;
+  line-height:36px;
+  letter-spacing:0px;
+  width: 100%;
+  padding:0px 0 0 0;
+}
+.left { 
+  width: 30%; 
+  float:left; 
+  text-align:center; 
+  display:inline; 
+  padding-left:80px;
+}
+
+.right { 
+  width: 30%; 
+  float:right; 
+  text-align:center; 
+  display:inline;
+  padding-right:80px;
+}
+
+.clear { 
+  clear:both; 
+}
+.horizontal img{
+display: block;float: left;margin-right: 5px;
+}
+/*
+.child_div_left{
+  float.left;
+  margin-right:5px;
+}
+*/
+#border
+{
+margin-left: auto;
+margin-right: auto;
+border: 2px solid #a1a1a1;
+
+padding: 10px 40px; 
+background: #FFFFFF;
+width: 900px;
+border-radius: 25px;
+}
+.tableborder
+{
+border: 2px solid #a1a1a1;
+border-bottom-style: dashed #a1a1a1;
+border-left-style: none;
+border-right-style: none;
+padding: 10px 10px; 
+background: #EEEEEE;
+width: 40%;
+border-radius: 25px;
+}

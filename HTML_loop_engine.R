@@ -316,7 +316,7 @@ demographics.mod <- rename(demographics.mod, replace=c("Male_Students_Percent" =
                                                        "F_and_R_Meals_Percent" = "Percent Free and Reduced Price Lunch",
                                                        "Total_Students_Num" = "Total Students"
                                                  ))
-demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,11,9,10)]
+demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,12,11,9,10)]
                                                                                                                          
                                       
 
@@ -348,11 +348,13 @@ footnotes.mod <- dget(paste(data.path,"footnotes.mod.Rda", sep=""))
 #set color palettes
 quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6") 
 statescore.palette <- c("#E6D2C8", "#C3B4A5", "#6EB441", "#BED75A", "#E6E6E6", "#B9B9B9")
+race.palette <- c("#2479F2", "#004CD2", "#A8D9FF", "#82FFFF", "#D2D2D2")
+pie.palette <- c("#2479F2", "#D2D2D2")
   
-#x <- c(94)
-#x <- c(3, 5, 52, 86, 72, 94)
-#for(s in x){
-for(s in school.mod$School_ID){
+#x <- c(72)
+x <- c(3, 5, 8, 52, 72, 86, 72, 94)
+for(s in x){
+#for(s in school.mod$School_ID){
   n <- school.mod[school.mod$School_ID == s,]
   n <- n$graph_name
   d <- school.mod[school.mod$School_ID == s,]
@@ -521,8 +523,40 @@ demographics.table <- t(demographics.graph)
 #####################################Plot Demographics because why not##############################
 #
 #gender.variables <- names(demographics.graph) %in% c("Percent Male", "Percent Female")
-#demographics.variables <- names(demographics.graph) %in% c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other")
-#gender.graph <- subset(demographics.graph, select=gender.variables)
+
+race.graph <- subset(demographics.graph, select=c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"))
+race.graph <- reshape(race.graph,
+                      varying = c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"),
+                      v.names = "race",
+                      timevar = "bucket",
+                      times = c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"),
+                      new.row.names = 1:5000,
+                      direction = "long")
+race.graph$fraction = race.graph$race / sum(race.graph$race)
+race.graph <- race.graph[order(race.graph$fraction, decreasing=TRUE), ]
+race.graph$ymax <- cumsum(race.graph$fraction)
+race.graph$ymin <- c(0, head(race.graph$ymax, n=-1))
+#time to make the doughnuts. *rimshot*
+race.plot <- ggplot(race.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+race.plot <- race.plot + scale_fill_manual(values = race.palette, breaks=c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"))
+race.plot <- race.plot + geom_rect()
+race.plot <- race.plot + coord_polar(theta="y")
+race.plot <- race.plot + xlim(c(0, 4))
+race.plot <- race.plot + labs(title="Race/Ethnicity")
+race.plot <- race.plot + theme(axis.ticks.x = element_blank(),
+                                         axis.text.x = element_blank(),
+                                         strip.text.x = element_blank(),
+                                         axis.text.y = element_blank(),
+                                         axis.ticks.y = element_blank(),
+                                         strip.text.y = element_blank(),
+                                         legend.position = "none",
+                                         strip.background = element_blank(),
+                                         plot.background = element_blank(),
+                                         plot.title = element_text(size = rel(3), face='bold', color = "#FEBC11"),
+                                         strip.background = element_blank(),
+                                         panel.background = element_blank(),
+                                         panel.grid.major = element_blank(),
+                                         panel.grid.minor = element_blank())
 #race.graph <- subset(demographics.graph, select=demographics.variables)
 frl.graph <- subset(demographics.graph, select=c("Percent Free and Reduced Price Lunch"))
 frl.graph$anti <- (100 - frl.graph$"Percent Free and Reduced Price Lunch")
@@ -539,6 +573,7 @@ frl.graph$ymax <- cumsum(frl.graph$fraction)
 frl.graph$ymin <- c(0, head(frl.graph$ymax, n=-1))
 #time to make the doughnuts. *rimshot*
 frl.plot <- ggplot(frl.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+frl.plot <- frl.plot + scale_fill_manual(values = pie.palette, breaks=c("Percent Free and Reduced Price Lunch", "anti"))
 frl.plot <- frl.plot + geom_rect()
 frl.plot <- frl.plot + coord_polar(theta="y")
 frl.plot <- frl.plot + xlim(c(0, 4))
@@ -557,7 +592,7 @@ frl.plot <- frl.plot + theme(axis.ticks.x = element_blank(),
                                          panel.background = element_blank(),
                                          panel.grid.major = element_blank(),
                                          panel.grid.minor = element_blank())
-
+###################attrition plot############################################
 attrition.graph <- subset(attrition.mod, School_ID == s)
 
 attrition.graph$anti <- (100 - attrition.graph$Attrition_Rate)
@@ -574,11 +609,53 @@ attrition.graph$ymax <- cumsum(attrition.graph$fraction)
 attrition.graph$ymin <- c(0, head(attrition.graph$ymax, n=-1))
 #time to make the doughnuts. *rimshot*
 attrition.plot <- ggplot(attrition.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+#attrition.plot <- attrition.plot + annotate("text", x = 0, y = 0, label = attrition.print, colour="#4F4F4F", size = 42)
+attrition.plot <- attrition.plot + scale_fill_manual(values = pie.palette, breaks=c("Attrition_Rate", "anti"))
 attrition.plot <- attrition.plot + geom_rect()
 attrition.plot <- attrition.plot + coord_polar(theta="y")
 attrition.plot <- attrition.plot + xlim(c(0, 4))
-attrition.plot <- attrition.plot + labs(title="Attrition")
+attrition.plot <- attrition.plot + ggtitle("Attrition")
 attrition.plot <- attrition.plot + theme(axis.ticks.x = element_blank(),
+                                         axis.text.x = element_blank(),
+                                         axis.text = element_blank(),
+                                         strip.text.x = element_blank(),
+                                         axis.text.y = element_blank(),
+                                         axis.ticks.y = element_blank(),
+                                         strip.text.y = element_blank(),
+                                         legend.position = "none",
+                                         strip.background = element_blank(),
+                                         plot.background = element_blank(),
+                                         plot.title = element_text(size = rel(3), face='bold', color = "#FEBC11"),
+                                         strip.background = element_blank(),
+                                         panel.background = element_blank(),
+                                         panel.border = element_blank(),
+                                         panel.grid.major = element_blank(),
+                                         panel.grid.minor = element_blank())
+                                         #text = element_blank())
+
+
+########################################sped plot####################################################
+sped.graph <- subset(demographics.graph, select=c("Percent Special Needs"))
+sped.graph$anti <- (100 - sped.graph$"Percent Special Needs")
+sped.graph <- reshape(sped.graph,
+                      varying = c("Percent Special Needs", "anti"),
+                      v.names = "sped",
+                      timevar = "bucket",
+                      times = c("Percent Special Needs", "anti"),
+                      new.row.names = 1:5000,
+                      direction = "long")
+sped.graph$fraction = sped.graph$sped / sum(sped.graph$sped)
+sped.graph <- sped.graph[order(sped.graph$fraction), ]
+sped.graph$ymax <- cumsum(sped.graph$fraction)
+sped.graph$ymin <- c(0, head(sped.graph$ymax, n=-1))
+#time to make the doughnuts. *rimshot*
+sped.plot <- ggplot(sped.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+sped.plot <- sped.plot + scale_fill_manual(values = pie.palette, breaks=c("Percent Special Needs", "anti"))
+sped.plot <- sped.plot + geom_rect()
+sped.plot <- sped.plot + coord_polar(theta="y")
+sped.plot <- sped.plot + xlim(c(0, 4))
+sped.plot <- sped.plot + labs(title="Special Ed. Rate")
+sped.plot <- sped.plot + theme(axis.ticks.x = element_blank(),
                                          axis.text.x = element_blank(),
                                          strip.text.x = element_blank(),
                                          axis.text.y = element_blank(),
@@ -592,8 +669,6 @@ attrition.plot <- attrition.plot + theme(axis.ticks.x = element_blank(),
                                          panel.background = element_blank(),
                                          panel.grid.major = element_blank(),
                                          panel.grid.minor = element_blank())
-#attrition.plot <- attrition.plot + geom_text(aes(label = attrition.print, x = 0, y = 0), size = 42)
-
 
 
 #sped.graph <- subset(demographics.graph, select=c("Percent Special Needs"))
@@ -601,7 +676,7 @@ attrition.plot <- attrition.plot + theme(axis.ticks.x = element_blank(),
 #
 #####################################Knit to HTML Template###########################################
 
-knit2html("HTML_template.Rhtml", encoding = 'UTF-8')
+knit("HTML_template.Rhtml")
 #hatersgonnahate.jpg
 filename <- paste(report.path,n,"_HTML_Template", sep="")
 file.rename(from="HTML_template.html",to=paste(report.path,n,"_HTML_Template.html", sep=""))

@@ -1,4 +1,18 @@
+<!DOCTYPE html>
 
+<html>
+<head>
+<title>Verification Template</title>
+</head>
+<!--begin.rcode setup, include=FALSE
+library(knitr)
+# to base64 encode images
+opts_knit$set(upload.fun = image_uri)
+knit_patterns$set(header.begin = NULL)
+end.rcode-->
+<link rel="stylesheet" type="text/css" href="C:\Users\mhilton\Documents\GitHub\Report_Generator\custom.css">
+
+<body>
 
 <div id = "border", align = "center">
 <div align= "right">
@@ -14,6 +28,7 @@ end.rcode-->
 cat(d)
 end.rcode-->
 </h1>
+
 </div>
 <div align= "center">
 <p>
@@ -24,7 +39,7 @@ end.rcode-->
 </p>
 </div>
 <div align= "center">
-<p>This is the prototype Report Card Verification Template. All Graphs and data are pulled, formatted and visualized in R, and then exported into an HTML/CSS template. Shit be hella tight.<br />
+<p>This is the prototype Report Card Verification Template. All Graphs and data are pulled, formatted and visualized in R, and then exported into an HTML/CSS template. This be hella tight.<br />
 <br />
 <strong>-MH</strong></p>
 <p>To Do List: <br />
@@ -32,7 +47,7 @@ end.rcode-->
 <li>Pull in School Leader Info</li>
 <li>Pull in Attainment Data.</li>
 <li>Create repo for footnotes, and pull in. Probably via CSV.</li>
-<li>Visualize Percentages (maybe.)</li>
+<li>Fire polish the pie charts</li>
 <li>Make this thing look a little less gimp.</li>
 </ul>
 </p>
@@ -40,9 +55,13 @@ end.rcode-->
 <div class="header", align= "center">
 <h1>School Demographics</h1>
 </div>
-<div id="demographics.graph", align="center">
-<table style="width:800px">
+<table style="width:800px; border:none;">
 <tr style="height:200px;">
+<td style="height:200px; width:200px;">
+<!--begin.rcode race.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+plot(race.plot)
+end.rcode-->
+</td>
 <td style="height:200px; width:200px;">
 <!--begin.rcode attrition.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 plot(attrition.plot)
@@ -54,20 +73,14 @@ plot(frl.plot)
 end.rcode-->
 </td>
 <td style="height:200px; width:200px;">
-<!--begin.rcode attrition2.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-plot(attrition.plot)
-end.rcode-->
-</td>
-<td style="height:200px; width:200px;">
-<!--begin.rcode frl2.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-plot(frl.plot)
+<!--begin.rcode sped.graph, fig.width=8, fig.height=8, fig.align='center', out.width=200, out.height=200, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+plot(sped.plot)
 end.rcode-->
 </td>
 </tr>
 </table>
-</div>
 
-<div id="demographics.table", align="center">
+<div align="center">
 <!--begin.rcode demographics.table, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
 data(demographics.graph)
 demographics.table <- xtable(demographics.table)
@@ -160,3 +173,5 @@ if(nrow(quartile.graph) > 0) {cat("<h2>Quartile Distribution</h2>")
 end.rcode-->
 </div>
 </div>
+</body>
+</html>
