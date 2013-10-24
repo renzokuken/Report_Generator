@@ -463,18 +463,19 @@ statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level),
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, pos = (cumsum(score) + 15))
 
  sublist <- unique(unlist(statescore.graph$Subtest_Cat_RC_ID, use.names = FALSE))
+#This loop creates a plot for each CRT umbrella category.
 for (sub in sublist){
                       statescore.graph.loop <- assign(paste("statescore.graph.", sub, sep = ""),subset(statescore.graph, Subtest_Cat_RC_ID == sub))
 
                       statescore.graph.loop$label <- ifelse(statescore.graph.loop$Score_Grouping_Cat_ID == 2, "", statescore.graph.loop$label)
 
                       label_wrap <- function(width = 100) {
-                                                                function(variable, value) {
-                                                                                           inter <- lapply(strwrap(as.character(value), width=width, simplify=FALSE), 
-                                                                                           paste, collapse="\n")
-                                                                                           inter <- gsub(paste0("(.{",width,"})"), "\\1\n",inter)
-                                                                                          }
-                                                                }
+                                                           function(variable, value) {
+                                                                                      inter <- lapply(strwrap(as.character(value), width=width, simplify=FALSE), 
+                                                                                      paste, collapse="\n")
+                                                                                      inter <- gsub(paste0("(.{",width,"})"), "\\1\n",inter)
+                                                                                     }
+                                                          }
   
                       statescore.plot <- ggplot(statescore.graph.loop, aes(x=reorder(score_level, order), y=score, fill=score_stack))
                       statescore.plot <- statescore.plot + geom_bar(stat="identity", width=1, order=order)
@@ -521,9 +522,8 @@ demographics.table <- t(demographics.graph)
   
 
 #####################################Plot Demographics because why not##############################
-#
-#gender.variables <- names(demographics.graph) %in% c("Percent Male", "Percent Female")
 
+#Race Graph
 race.graph <- subset(demographics.graph, select=c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"))
 race.graph <- reshape(race.graph,
                       varying = c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"),
@@ -532,12 +532,15 @@ race.graph <- reshape(race.graph,
                       times = c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"),
                       new.row.names = 1:5000,
                       direction = "long")
+race.graph$race_print <- paste(as.character(race.graph$race), "%", sep="")
+race.max <- max(race.graph$race_print)
 race.graph$fraction = race.graph$race / sum(race.graph$race)
 race.graph <- race.graph[order(race.graph$fraction, decreasing=TRUE), ]
 race.graph$ymax <- cumsum(race.graph$fraction)
 race.graph$ymin <- c(0, head(race.graph$ymax, n=-1))
 #time to make the doughnuts. *rimshot*
 race.plot <- ggplot(race.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+race.plot <- race.plot + geom_text(data=NULL, x = 0, y = 0, label = race.max, colour="#4F4F4F", size = 42)
 race.plot <- race.plot + scale_fill_manual(values = race.palette, breaks=c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"))
 race.plot <- race.plot + geom_rect()
 race.plot <- race.plot + coord_polar(theta="y")
@@ -557,7 +560,8 @@ race.plot <- race.plot + theme(axis.ticks.x = element_blank(),
                                          panel.background = element_blank(),
                                          panel.grid.major = element_blank(),
                                          panel.grid.minor = element_blank())
-#race.graph <- subset(demographics.graph, select=demographics.variables)
+
+#FRL Graph
 frl.graph <- subset(demographics.graph, select=c("Percent Free and Reduced Price Lunch"))
 frl.graph$anti <- (100 - frl.graph$"Percent Free and Reduced Price Lunch")
 frl.graph <- reshape(frl.graph,
@@ -567,12 +571,15 @@ frl.graph <- reshape(frl.graph,
                       times = c("Percent Free and Reduced Price Lunch", "anti"),
                       new.row.names = 1:5000,
                       direction = "long")
+frl.graph$frl_print <- paste(as.character(frl.graph$frl), "%", sep="")
+frl.print <- subset(frl.graph$frl_print, (frl.graph$bucket) == "Percent Free and Reduced Price Lunch")
 frl.graph$fraction = frl.graph$frl / sum(frl.graph$frl)
 frl.graph <- frl.graph[order(frl.graph$fraction, decreasing=TRUE), ]
 frl.graph$ymax <- cumsum(frl.graph$fraction)
 frl.graph$ymin <- c(0, head(frl.graph$ymax, n=-1))
 #time to make the doughnuts. *rimshot*
 frl.plot <- ggplot(frl.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+frl.plot <- frl.plot + geom_text(data=NULL, x = 0, y = 0, label = frl.print, colour="#4F4F4F", size = 42)
 frl.plot <- frl.plot + scale_fill_manual(values = pie.palette, breaks=c("Percent Free and Reduced Price Lunch", "anti"))
 frl.plot <- frl.plot + geom_rect()
 frl.plot <- frl.plot + coord_polar(theta="y")
@@ -592,7 +599,8 @@ frl.plot <- frl.plot + theme(axis.ticks.x = element_blank(),
                                          panel.background = element_blank(),
                                          panel.grid.major = element_blank(),
                                          panel.grid.minor = element_blank())
-###################attrition plot############################################
+
+#Attrition Graph
 attrition.graph <- subset(attrition.mod, School_ID == s)
 
 attrition.graph$anti <- (100 - attrition.graph$Attrition_Rate)
@@ -609,7 +617,7 @@ attrition.graph$ymax <- cumsum(attrition.graph$fraction)
 attrition.graph$ymin <- c(0, head(attrition.graph$ymax, n=-1))
 #time to make the doughnuts. *rimshot*
 attrition.plot <- ggplot(attrition.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
-#attrition.plot <- attrition.plot + annotate("text", x = 0, y = 0, label = attrition.print, colour="#4F4F4F", size = 42)
+attrition.plot <- attrition.plot + geom_text(data=NULL, x = 0, y = 0, label = attrition.print, colour="#4F4F4F", size = 42)
 attrition.plot <- attrition.plot + scale_fill_manual(values = pie.palette, breaks=c("Attrition_Rate", "anti"))
 attrition.plot <- attrition.plot + geom_rect()
 attrition.plot <- attrition.plot + coord_polar(theta="y")
@@ -630,11 +638,11 @@ attrition.plot <- attrition.plot + theme(axis.ticks.x = element_blank(),
                                          panel.background = element_blank(),
                                          panel.border = element_blank(),
                                          panel.grid.major = element_blank(),
-                                         panel.grid.minor = element_blank())
-                                         #text = element_blank())
+                                         panel.grid.minor = element_blank(),
+                                         strip.text = element_blank())
 
 
-########################################sped plot####################################################
+#SPED Graph
 sped.graph <- subset(demographics.graph, select=c("Percent Special Needs"))
 sped.graph$anti <- (100 - sped.graph$"Percent Special Needs")
 sped.graph <- reshape(sped.graph,
@@ -644,12 +652,15 @@ sped.graph <- reshape(sped.graph,
                       times = c("Percent Special Needs", "anti"),
                       new.row.names = 1:5000,
                       direction = "long")
+sped.graph$sped_print <- paste(as.character(sped.graph$sped), "%", sep="")
+sped.print <- subset(sped.graph$sped_print, (sped.graph$bucket) == "Percent Special Needs")
 sped.graph$fraction = sped.graph$sped / sum(sped.graph$sped)
 sped.graph <- sped.graph[order(sped.graph$fraction), ]
 sped.graph$ymax <- cumsum(sped.graph$fraction)
 sped.graph$ymin <- c(0, head(sped.graph$ymax, n=-1))
 #time to make the doughnuts. *rimshot*
 sped.plot <- ggplot(sped.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
+sped.plot <- sped.plot + geom_text(data=NULL, x = 0, y = 0, label = sped.print, colour="#4F4F4F", size = 42)
 sped.plot <- sped.plot + scale_fill_manual(values = pie.palette, breaks=c("Percent Special Needs", "anti"))
 sped.plot <- sped.plot + geom_rect()
 sped.plot <- sped.plot + coord_polar(theta="y")
@@ -670,9 +681,6 @@ sped.plot <- sped.plot + theme(axis.ticks.x = element_blank(),
                                          panel.grid.major = element_blank(),
                                          panel.grid.minor = element_blank())
 
-
-#sped.graph <- subset(demographics.graph, select=c("Percent Special Needs"))
-#sped.graph$anti <- (100 - sped.graph$"Percent Special Needs")
 #
 #####################################Knit to HTML Template###########################################
 
