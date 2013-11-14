@@ -1,4 +1,8 @@
-
+###########################################################################################################
+#Project: HTML Report Generator                                                                           #
+#Written By: Mike Hilton                                                                                  #
+#Last Updated: 11-13-13                                                                                   #
+###########################################################################################################
 rm(list=ls())
 
 #set directory
@@ -6,16 +10,14 @@ wd <- getwd()
 if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator")
 #Declare globals
 
-pulldata <- 1
+pulldata <- 0
 
-formatdata <- 1
+formatdata <- 0
 
-publishdata_html <- 0
+publishdata_html <- 1
 
-publishdata_pdf <- 0
-
-data.path <<- paste("C:/Users/mhilton/Documents/R_Data/HTML_Reports/")
-report.path <<- paste("C:/Users/mhilton/Documents/R_Graphs/HTML_Reports/")
+data.path <<- paste("Z:/001_NEW_SNEETCH/Report_Card/2013/Data/")
+report.path <<- paste("Z:/001_NEW_SNEETCH/Report_Card/2013/Output/")
 
 
 library(RODBC)
@@ -39,27 +41,31 @@ ss <- odbcConnect('State_Scores_prod')
 #Declare SQL Queries
 school.query <- ("SELECT
              S.School_ID AS Site_ID
-            ,Type
+            ,S.Cluster_ID
+            ,C.Name AS Region_Name
+            ,S.Type
             ,Display_Name
-            ,Web_URL
-            ,Address_1
-            ,Address_2
-            ,City
-            ,State
-            ,Zipcode
-            ,Telephone_1
+            ,S.Web_URL
+            ,S.Address_1
+            ,S.Address_2
+            ,S.City
+            ,S.State
+            ,S.Zipcode
+            ,S.Telephone_1
             ,SP.Per_Pupil_Revenue
             FROM Schools.dbo.Schools S
             JOIN DP_Production.dbo.School_Profiles SP
             ON S.School_ID = SP.School_ID
+            JOIN Clusters.dbo.Clusters C
+            ON S.Cluster_ID = C.Cluster_ID
             WHERE Academic_Year_Closed IS NULL
             AND Year_Opened < 2012
             AND PP_ID = 32
+            ORDER BY Site_ID
             ")
 
-region.query <- ("SELECT
-              C.Cluster_ID AS Site_ID
-             ,Name
+region.query <- ("C.Cluster_ID AS Site_ID
+             ,Name AS Region_Name
              ,Address_1
              ,Address_2
              ,City
@@ -67,14 +73,18 @@ region.query <- ("SELECT
              ,Zip
              ,Website
              ,Phone_Office
+             ,first_name
+             ,last_name
              FROM Clusters.dbo.Clusters C
-             JOIN Clusters.dbo.Xref_Regional_Leader XRL
+             LEFT JOIN Clusters.dbo.Xref_Regional_Leader XRL
              ON C.Cluster_ID = XRL.Cluster_ID
-             JOIN Clusters.dbo.Regional_Leader RL 
+             LEFT JOIN Clusters.dbo.Regional_Leader RL 
              ON XRL.Regional_Leader_ID = RL.Regional_Leader_ID
-             WHERE date_ended IS NULL
-             AND Inactive = 0
+             WHERE Inactive = 0
              AND Academic_Year_Opened < 2013
+             AND (date_ended IS NULL
+             OR C.Cluster_ID = 16)
+             ORDER BY Site_ID
             ")
 
 #NOTE: need a separate query to the schools database for cases where N School Leaders > 1
@@ -95,7 +105,7 @@ schoolleader.query <- ("SELECT
 
 attrition.query <- ("SELECT
                           School_ID AS Site_ID
-                          ,1 AS Site_Type
+                          ,1 AS Site_Level
                           ,Attrition_Rate
                           FROM v_Report_Card_Attrition
 
@@ -103,7 +113,7 @@ attrition.query <- ("SELECT
 
                      SELECT
                           Cluster_ID AS Site_ID
-                          ,2 AS Site_Type
+                          ,2 AS Site_Level
                           ,Attrition_Rate
                           FROM v_Report_Card_Region_Attrition
 
@@ -196,22 +206,22 @@ statescore.query <- ("SELECT
             UNION
 
             SELECT
-             State
+             State AS State_ID
             ,2 AS Site_Level
-            ,Academic_Year
+            ,Academic_Year AS AC_Year
             ,Grade
-            ,Cluster_ID
-            ,NULL AS Subtest_ID
-            ,NULL AS Subtest_Name
+            ,Cluster_ID AS Site_ID
+            ,999 AS Subtest_ID
+            ,'N/A' AS Subtest_Name
             ,Subtest_Cat_RC_ID
             ,Score_Grouping_Name
             ,Score_Grouping_Cat_ID
-            ,State_Weighted_Num_Tested
-            ,State_Weighted_Score_Percent
-            ,District_Weighted_Num_Tested
-            ,District_Weighted_Score_Percent
-            ,Region_Num_Tested
-            ,Region_Score_Percent
+            ,State_Weighted_Num_Tested AS State_Num_Tested
+            ,State_Weighted_Score_Percent AS State_Scores_Percent
+            ,District_Weighted_Num_Tested AS District_Num_Tested
+            ,District_Weighted_Score_Percent AS District_Scores_Percent
+            ,Region_Num_Tested AS School_Num_Tested
+            ,Region_Score_Percent AS School_Scores_Percent
             FROM Report_Card.dbo.v_Region_Weighted_State_Scores_Stacked_Graph_current
             WHERE Academic_Year = 2012
             AND Score_Grouping_Cat_ID IN (2,3)
@@ -292,6 +302,8 @@ dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
 dput(demographics.raw, paste(data.path,"demographics.raw.Rda", sep=""))
 dput(footnotes.raw, paste(data.path,"footnotes.raw.Rda", sep=""))
+
+#write.csv(statescore.raw, file = 'statescore_raw.csv')
   
 break
 }
@@ -311,6 +323,7 @@ quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
 statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
 demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
 footnotes.raw <- dget(paste(data.path,"footnotes.raw.Rda", sep=""))
+
 
 ###########################################format school data########################################
 school.mod <- school.raw
@@ -333,13 +346,13 @@ region.mod$leader_name <- paste(region.mod$first_name, " ", region.mod$last_name
 
 ############################################format school leader data################################
 schoolleader.mod <- schoolleader.raw
-schoolleader.mod$display_name <- paste(schoolleader.mod$first_name, " ", schoolleader.mod$last_name)
+schoolleader.mod$leader_name <- paste(schoolleader.mod$first_name, " ", schoolleader.mod$last_name)
 schoolleader.mod$count <- sapply(1:length(schoolleader.mod$Site_ID), function(i)sum(schoolleader.mod$Site_ID[i]==schoolleader.mod$Site_ID[1:i]))
 schoolleader.mod <- reshape(schoolleader.mod, timevar = "count", 
                                               idvar = c("Site_ID"), 
                                               direction = "wide")
-schoolleader.mod$display_name <- paste(schoolleader.mod$display_name.1, " & ", schoolleader.mod$display_name.2, sep="")
-schoolleader.mod$display_name <- gsub(" & NA","", schoolleader.mod$display_name)
+schoolleader.mod$leader_name <- paste(schoolleader.mod$leader_name.1, " & ", schoolleader.mod$leader_name.2, sep="")
+schoolleader.mod$leader_name <- gsub(" & NA","", schoolleader.mod$leader_name)
 
 
 ############################################format attrition data####################################
@@ -392,9 +405,11 @@ quartile.mod$Sub_Test_Name <- factor(quartile.mod$Sub_Test_Name,
 quartile.mod$sequence <- paste(quartile.mod$Grade_When_Taken_int, quartile.mod$Season)
 
 #Create section labels with proper order.
-#Ideally this would be solved by changing the levels order of the Graph_Label to the alphabetical order of sequence...
-#F*ck it.
-ordered_labels <- reorder(unique(quartile.mod$Graph_Label), c(10, 11, 12, 13, 14, 6, 7, 9, 8, 1, 2, 4, 5, 3))
+quartile.mod <- subset(quartile.mod, select=-c(id))
+attach(quartile.mod)
+quartile.mod <- quartile.mod[order(Site_Level,Site_ID,Sub_Test_Name,sequence),] 
+detach(quartile.mod)
+
 
 #generate labels for graph
 quartile.mod$label <- abs(quartile.mod$percent_at_quartile)
@@ -431,9 +446,18 @@ statescore.mod$order <- as.character(statescore.mod$order)
 statescore.mod$Subtest_Name <- gsub("[[:space:]]*$","", statescore.mod$Subtest_Name)
 #rename grade to sub if applicable
 statescore.mod$Grade <- as.character(statescore.mod$Grade)
-statescore.mod$Grade[statescore.mod$Grade=="99"] <- statescore.mod$Subtest_Name[statescore.mod$Grade=="99"]
+statescore.mod$Grade[statescore.mod$Grade=="99" & statescore.mod$Site_Level==2] <- "EOC"
+ #footnote.1 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 1,]
+statescore.mod$Grade[statescore.mod$Grade=="99" & statescore.mod$Site_Level==1] <- statescore.mod$Subtest_Name[statescore.mod$Grade=="99"]
+
 #round floating point scores
 statescore.mod$score <- round(statescore.mod$score, 0)
+
+#WHY IS SORTING THIS HARD.
+statescore.mod <- subset(statescore.mod, select=-c(id))
+attach(statescore.mod)
+statescore.mod <- statescore.mod[order(Site_Level,State_ID,Site_ID,Grade,Subtest_Cat_RC_ID,order),] 
+detach(statescore.mod)
 
 ################################################format demographic data#################################################
 demographics.mod <- demographics.raw
@@ -460,7 +484,7 @@ demographics.mod <- rename(demographics.mod, replace=c("Male_Students_Percent" =
                                                        "F_and_R_Meals_Percent" = "Percent Free and Reduced Price Lunch",
                                                        "Total_Students_Num" = "Total Students"
                                                  ))
-demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,12,11,9,10)]
+demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,9,13,12,10,11)]
                                                                                                                          
                                       
 
@@ -469,11 +493,15 @@ dput(school.mod, paste(data.path, "school.mod.Rda", sep=""))
 dput(region.mod, paste(data.path, "region.mod.Rda", sep=""))
 dput(schoolleader.mod, paste(data.path, "schoolleader.mod.Rda", sep=""))
 dput(attrition.mod, paste(data.path, "attrition.mod.Rda", sep=""))
+dput(fte.mod, paste(data.path, "fte.mod.Rda", sep=""))
 dput(growth.mod, paste(data.path, "growth.mod.Rda", sep=""))
+dput(growth.region.mod, paste(data.path, "growth.region.mod.Rda", sep=""))
 dput(quartile.mod, paste(data.path, "quartile.mod.Rda", sep=""))
 dput(statescore.mod, paste(data.path,"statescore.mod.Rda", sep =""))
 dput(demographics.mod, paste(data.path,"demographics.mod.Rda", sep=""))
 dput(footnotes.mod, paste(data.path,"footnotes.mod.Rda", sep=""))
+
+#write.csv(statescore.mod, file = 'statescores_mod.csv')
 break
 }
 
@@ -485,7 +513,9 @@ school.mod <- dget(paste(data.path,"school.mod.Rda", sep=""))
 region.mod <- dget(paste(data.path,"region.mod.Rda", sep=""))
 schoolleader.mod <- dget(paste(data.path,"schoolleader.mod.Rda", sep=""))
 attrition.mod <- dget(paste(data.path,"attrition.mod.Rda", sep=""))
+fte.mod <- dget(paste(data.path, "fte.mod.Rda", sep=""))
 growth.mod <- dget(paste(data.path,"growth.mod.Rda", sep=""))
+growth.region.mod <- dget(paste(data.path,"growth.region.mod.Rda", sep=""))
 quartile.mod <- dget(paste(data.path,"quartile.mod.Rda", sep=""))
 statescore.mod <- dget(paste(data.path,"statescore.mod.Rda", sep=""))
 demographics.mod <- dget(paste(data.path,"demographics.mod.Rda", sep=""))
@@ -496,48 +526,88 @@ quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6")
 statescore.palette <- c("#BED75A", "#6EB441", "#E6D2C8", "#C3B4A5", "#E6E6E6", "#B9B9B9")
 race.palette <- c("#2479F2", "#004CD2", "#A8D9FF", "#82FFFF", "#D2D2D2")
 pie.palette <- c("#D2D2D2", "#2479F2")
-  
-#x <- c(72)
+
+for(level in c(1)){
+
+
+if(level == 1){
+#x <- school.mod$Site_ID
+#x <- c(3)
 x <- c(3, 5, 7, 8, 25, 52, 72, 86, 72, 94)
+}
+else if(level == 2){
+  x <- region.mod$Site_ID
+}
+
 for(s in x){
-#for(s in school.mod$School_ID){
-  n <- school.mod[school.mod$School_ID == s,]
+  if(level == 1){
+  n <- school.mod[school.mod$Site_ID == s,]
   n <- n$graph_name
-  d <- school.mod[school.mod$School_ID == s,]
+  f <- school.mod[school.mod$Site_ID == s,]
+  f$Region_Name <- gsub(" ","_",f$Region_Name)
+  f$Region_Name <- gsub(",","",f$Region_Name)
+  f$Region_Name <- gsub("[[:space:]]*$","", f$Region_Name)
+  f <- f$Region_Name
+  d <- school.mod[school.mod$Site_ID== s,]
   d <- d$Display_Name
-  t <- school.mod[school.mod$School_ID == s,]
+  t <- school.mod[school.mod$Site_ID== s,]
   t <- t$Type
 
-  ppf <- school.mod[school.mod$School_ID == s,]
+  ppf <- school.mod[school.mod$Site_ID== s,]
   ppf <- ppf$Per_Pupil_Revenue
-  school.leader <- schoolleader.mod[schoolleader.mod$School_ID == s,]
-  school.leader <- school.leader$display_name
-  school.address <- school.mod[school.mod$School_ID == s,]
-  school.address <- school.address$address
-  school.url <- school.mod[school.mod$School_ID == s,]
-  school.url <- school.url$Web_URL
-  fte <- fte.mod[fte.mod$School_ID == s,]
+  site.leader <- schoolleader.mod[schoolleader.mod$Site_ID== s,]
+  site.leader <- site.leader$leader_name
+  site.address <- school.mod[school.mod$Site_ID== s,]
+  site.address <- site.address$address
+  site.url <- school.mod[school.mod$Site_ID== s,]
+  site.url <- site.url$Web_URL
+  fte <- fte.mod[fte.mod$Site_ID== s,]
   fte <- fte$teachers
-  footnote.1 <- footnotes.mod[footnotes.mod$School_ID == s & footnotes.mod$Footnote_Number == 1,]
+  footnote.1 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 1,]
   footnote.1 <- footnote.1$Text
-  footnote.2 <- footnotes.mod[footnotes.mod$School_ID == s & footnotes.mod$Footnote_Number == 2,]
+  footnote.2 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 2,]
   footnote.2 <- footnote.2$Text
-  footnote.3 <- footnotes.mod[footnotes.mod$School_ID == s & footnotes.mod$Footnote_Number == 3,]
+  footnote.3 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 3,]
   footnote.3 <- footnote.3$Text
-  
+} else if(level == 2){
+  n <- region.mod[region.mod$Site_ID == s,]
+  n <- n$graph_name
+  f <- region.mod[region.mod$Site_ID == s,]
+  f$Region_Name <- gsub(" ","_",f$Name)
+  f$Region_Name <- gsub(",","",f$Region_Name)
+  f$Region_Name <- gsub("[[:space:]]*$","", f$Region_Name)
+  f <- f$Region_Name
+  d <- region.mod[region.mod$Site_ID== s,]
+  d <- d$Name
+  site.leader <- region.mod[region.mod$Site_ID== s,]
+  site.leader <- region.mod$leader_name
+  site.address <- region.mod[region.mod$Site_ID== s,]
+  site.address <- site.address$address
+  site.url <- region.mod[region.mod$Site_ID== s,]
+  site.url <- site.url$Website
+  #region.fte <- fte.region.mod[fte.region.mod$Site_ID== s,]
+  #region.fte <- fte$teachers
+}
   print(s)
   print(n)
 #############################################subset attrition data###################################
-attrition.print <- subset(attrition.mod$attrition_print, (attrition.mod$School_ID == s))
+attrition.print <- subset(attrition.mod$attrition_print, (attrition.mod$Site_ID== s) & (attrition.mod$Site_Level == level))
 
 #############################################subset growth metrics###################################
-
-growth.Mathematics <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID == s) & (growth.mod$Sub_Test_Name == "Mathematics"))
-growth.Reading <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID == s) & (growth.mod$Sub_Test_Name == "Reading"))
-
+if(level==1){
+growth.Mathematics <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID== s) & (growth.mod$Sub_Test_Name == "Mathematics"))
+growth.Reading <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID== s) & (growth.mod$Sub_Test_Name == "Reading"))
+}else if(level==2){
+growth.region.Mathematics <- subset(growth.region.mod$Percent_Met_Growth_Target, (growth.region.mod$Region_ID== s) & (growth.region.mod$Sub_Test_Name == "Mathematics"))
+growth.region.Mathematics <- subset(growth.region.mod$Percent_Met_Growth_Target, (growth.region.mod$Region_ID== s) & (growth.region.mod$Sub_Test_Name == "Reading"))
+}
 #############################################set quartile plot#######################################
+
+#Ideally this would be solved by changing the levels order of the Graph_Label to the alphabetical order of sequence...
+#Fuck it.
+ordered_labels <- reorder(unique(quartile.mod$Graph_Label), c(10, 11, 12, 13, 14, 6, 7, 9, 8, 1, 2, 4, 5, 3))
 #calculates vertical position for bar labels
-quartile.graph <- subset(quartile.mod, School_ID == s)
+quartile.graph <- subset(quartile.mod, (Site_ID== s) & (Site_Level==level))
 
 #calculate label placement for stacked bars
 quartile.graph <- ddply(quartile.graph, .(Graph_Label, Sub_Test_Name), transform, pos = (((cumsum(label)) - 0.5*label)))
@@ -616,9 +686,15 @@ quartile.plot <- quartile.plot + guides(fill = guide_legend(nrow = 2))
 
 #################################set state score plot################################################
 
-statescore.graph <- subset(statescore.mod, School_ID == s)
+statescore.graph <- subset(statescore.mod, (Site_ID == s) & (Site_Level == level))
+if(level==1){
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, label = sum(score))
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, pos = (cumsum(score) + 15))
+}
+else if(level==2){
+  statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_level), transform, label = sum(score))
+statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_level), transform, pos = (cumsum(score) + 15))
+}
 
 #statescore.graph$score_stack <- factor(statescore.graph$score_stack)
 #statescore.graph$score_stack <- reorder(levels(statescore.graph$score_stack), c(2,1,4,3,6,5))
@@ -672,7 +748,7 @@ for (sub in sublist){
                                                                  panel.grid.major = element_blank(), 
                                                                  panel.grid.minor = element_blank())
                       statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 5.1)
-                      statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 3, byrow = TRUE))  
+                      statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
 
                       assign(paste("statescore.plot.", sub, sep = ""), statescore.plot)
                       rm(statescore.graph.loop)
@@ -680,10 +756,10 @@ for (sub in sublist){
 
 #####################################Subset Demographics#############################################
   
-demographics.graph <- subset(demographics.mod, (School_ID) == s)
-demographics.graph <- subset(demographics.graph, select=-c(School_ID, Display_Name))
+demographics.graph <- subset(demographics.mod, (Site_ID == s) & (Site_Level == level))
+#demographics.table <- subset(demographics.graph, select=-c(Site_ID, Site_Level, Display_Name))
 #split out demographics
-demographics.table <- demographics.graph[-c(8, 10)]
+demographics.table <- demographics.graph[-c(2,1,3,9,10)]
 demographics.table <- t(demographics.table)
   
 
@@ -767,7 +843,7 @@ frl.plot <- frl.plot + theme(axis.ticks.x = element_blank(),
                                          panel.grid.minor = element_blank())
 
 #Attrition Graph
-attrition.graph <- subset(attrition.mod, School_ID == s)
+attrition.graph <- subset(attrition.mod, (Site_ID == s) & (Site_Level == level))
 
 attrition.graph$anti <- (100 - attrition.graph$Attrition_Rate)
 attrition.graph <- reshape(attrition.graph,
@@ -851,9 +927,7 @@ sped.plot <- sped.plot + theme(axis.ticks.x = element_blank(),
 
 knit("HTML_template.Rhtml")
 #hatersgonnahate.jpg
-filename <- paste(report.path,n,"_HTML_Template", sep="")
-file.rename(from="HTML_template.html",to=paste(report.path,n,"_HTML_Template.html", sep=""))
-
+file.rename(from="HTML_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
 #I am a terrible programmer. -MH  
 if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {rm(statescore.graph.1)} else {cat()}
 if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) {rm(statescore.graph.2)} else {cat()}
@@ -864,11 +938,10 @@ if(!exists("footnote.1")) {cat()} else {rm(footnote.1)}
 if(!exists("footnote.2")) {cat()} else {rm(footnote.2)}
 if(!exists("footnote.3")) {cat()} else {rm(footnote.3)}
 
-#####################################Convert HTML to PDF#############################################
-#while(publishdata_pdf == 1) {
+######################################Convert HTML to PDF#############################################
 #set I/O variables
-input <- paste(report.path,n,"_HTML_Template.html", sep="")
-output <- paste(report.path,n,"_HTML_Template.pdf", sep="")
+input <- paste(report.path,"HTML_Reports/",f,"/",n,".html", sep="")
+output <- paste(report.path,"PDF_Reports/",f,"/",n,".pdf", sep="")
 
 #updates Batch file. NOTE: This file lives in the wkhtmltopdf directory.
 fileConn<-file("C:/Program Files (x86)/wkhtmltopdf/pdf_send.bat")
@@ -877,6 +950,7 @@ close(fileConn)
 
 #call batch file for command line conversion
 system("pdf_convert.bat")
+}
 }
 break
 }

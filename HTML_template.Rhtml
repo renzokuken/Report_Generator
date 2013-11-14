@@ -284,9 +284,9 @@ end.rcode-->
 </div>
 <div align= "center">
 <p>
-<!--begin.rcode school.contact, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-cat("<em>","<strong>",school.address,"</strong>","</em>","<br />")
-cat("<strong>",school.url,"</strong>")
+<!--begin.rcode site.contact, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat("<em>","<strong>",site.address,"</strong>","</em>","<br />")
+cat("<strong>",site.url,"</strong>")
 end.rcode-->
 </p>
 </div>
@@ -295,10 +295,9 @@ end.rcode-->
 <br />
 <p>To Do List: <br />
 <ul>
-<li>Teacher Retention</li>
-<li>Region Level Reports</li>
-<li>Pull in Attainment Data.</li>
-<li>Fix CRT Labels.</li>
+<li>Region: Teacher Retention</li>
+<li>Region: Pull in Attainment Data.</li>
+<li>School: Fix CRT Labels.</li>
 </ul>
 </p>
 </div>
@@ -306,7 +305,7 @@ end.rcode-->
 <h1>School Leader</h1>
 <p>
 <!--begin.rcode leader.name, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-cat("<b>", school.leader, "</b>")
+cat("<b>", site.leader, "</b>")
 end.rcode-->
 </p>
 </div>
@@ -354,15 +353,18 @@ end.rcode-->
 <div class="embolden", align= "center">
 <div class="left", align= "center">
 <!--begin.rcode attrition.print, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(level==1){
 cat("<h2>Number of Teachers (FTE)</h2>")
-cat("<p>",fte,"</p>")
+cat("<p>",fte,"</p>")}else if(level==2){cat()}
 end.rcode-->
 
 </div>
 <div class="right", align="center">
 <!--begin.rcode ppf.rate, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(level==1){
 cat("<h2>Per Pupil Funding</h2>")
 if(!exists("ppf")) {cat()} else {cat("<p>",ppf,"</p>")}
+}else if(level==2){cat()}
 end.rcode-->
 </div>
 </div>
