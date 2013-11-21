@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Verification Template</title>
+<title>School Verification Template</title>
 </head>
 <!--begin.rcode setup, include=FALSE
 library(knitr)
@@ -352,25 +352,22 @@ end.rcode-->
 </div>
 <div class="embolden", align= "center">
 <div class="left", align= "center">
-<!--begin.rcode attrition.print, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(level==1){
+<!--begin.rcode fte.print, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 cat("<h2>Number of Teachers (FTE)</h2>")
-cat("<p>",fte,"</p>")}else if(level==2){cat()}
+cat("<p>",fte,"</p>")
 end.rcode-->
 
 </div>
 <div class="right", align="center">
 <!--begin.rcode ppf.rate, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(level==1){
 cat("<h2>Per Pupil Funding</h2>")
 if(!exists("ppf")) {cat()} else {cat("<p>",ppf,"</p>")}
-}else if(level==2){cat()}
 end.rcode-->
 </div>
 </div>
 <div class="clear"></div>
 <div class="header-break", align= "center">
-<h1>CRT Results</h1>
+<h1>State Test Results</h1>
 </div>
 <div align= "center">
 <p>
@@ -414,22 +411,14 @@ end.rcode-->
 <div class="embolden", align= "center">
 <div class="left", align= "center">
 <!--begin.rcode growth.reading, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(level==1){
 if(!exists("growth.Reading")){cat()} else {cat("<h3>Percent Meeting Growth in Reading</h3>")
-cat("<p>",growth.Reading,"</p>")}} else if(level==2){
-if(!exists("growth.region.Reading.Elementary") & !exists("growth.region.Reading.Middle")) {cat()} else {cat("<h3>Percent Meeting Growth in Reading</h3>")}
-if(!exists("growth.region.Reading.Elementary")) {cat()} else{cat("<p>","Elementary: ",growth.region.Reading.Elementary,"</p>")}
-if(!exists("growth.region.Reading.Middle")) {cat()} else{cat("<p>","Middle: ",growth.region.Reading.Middle,"</p>")}}
+cat("<p>",growth.Reading,"</p>")}
 end.rcode-->
 </div>
 <div class="right", align="center">
 <!--begin.rcode growth.mathematics, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(level==1){
 if(!exists("growth.Mathematics")){cat()} else {cat("<h3>Percent Meeting Growth in Mathematics</h3>")
-cat("<p>",growth.Mathematics,"</p>")}} else if(level==2){
-if(!exists("growth.region.Mathematics.Elementary") & !exists("growth.region.Mathematics.Middle")) {cat()} else {cat("<h3>Percent Meeting Growth in Mathematics</h3>")}
-if(!exists("growth.region.Mathematics.Elementary")) {cat()} else{cat("<p>","Elementary: ",growth.region.Mathematics.Elementary,"</p>")}
-if(!exists("growth.region.Mathematics.Middle")) {cat()} else{cat("<p>","Middle: ",growth.region.Mathematics.Middle,"</p>")}}
+cat("<p>",growth.Mathematics,"</p>")}
 end.rcode-->
 </div>
 </div>
