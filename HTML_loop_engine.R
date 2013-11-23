@@ -10,11 +10,11 @@ wd <- getwd()
 if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator")
 #Declare globals
 
-pulldata <- 0
+pulldata <- 1
 
-formatdata <- 1
+formatdata <- 0
 
-publishdata_html <- 1
+publishdata_html <- 0
 
 data.path <<- paste("C:/Users/mhilton/Documents/R_Data/HTML_Reports/")
 report.path <<- paste("C:/Users/mhilton/Documents/R_Graphs/HTML_Reports/")
@@ -61,8 +61,8 @@ school.query <- ("SELECT
             JOIN Clusters.dbo.Clusters C
             ON S.Cluster_ID = C.Cluster_ID
             WHERE Academic_Year_Closed IS NULL
-            AND Year_Opened < 2012
-            AND PP_ID = 32
+            AND Year_Opened < 2013
+            AND PP_ID = 36
             ORDER BY Site_ID
             ")
 
@@ -84,7 +84,7 @@ region.query <- ("SELECT
              LEFT JOIN Clusters.dbo.Regional_Leader RL 
              ON XRL.Regional_Leader_ID = RL.Regional_Leader_ID
              WHERE Inactive = 0
-             AND Academic_Year_Opened < 2013
+             AND Academic_Year_Opened < 2014
              AND (date_ended IS NULL
              OR C.Cluster_ID = 16)
              ORDER BY Site_ID
@@ -102,7 +102,7 @@ schoolleader.query <- ("SELECT
                     JOIN Schools.dbo.School_Leader SL
                     ON XSL.School_Leader_ID = SL.School_Leader_ID
                     WHERE Academic_Year_Closed IS NULL
-                    AND Year_Opened < 2012
+                    AND Year_Opened < 2013
                     AND XSL.date_ended IS NULL
                     ")
 
@@ -127,8 +127,8 @@ fte.query <- ("SELECT
                   ,Cluster_ID
                   ,FTE
                   ,REPORT_CARD_2012
-                  FROM v_Teacher_Counts_By_Academic_Year_Region_RC2012
-                  WHERE REPORT_CARD_2012 = 'INCLUDED'
+                  FROM v_Teacher_Counts_By_Academic_Year_Region_RC2013
+                  WHERE REPORT_CARD_2013 = 'INCLUDED'
                   AND FTE IS NOT NULL
                   ")
 
@@ -147,16 +147,16 @@ retention.query <- ("SELECT
 
 
 ##Note I kept this query on a separate file because it's FUCKING HUGE.
-#source("Attainment_query")
+source("Alumni_query.R")
 
 growth.query <- ("SELECT
                       *
-                      FROM v_growth_NRT_RC2012_SL
+                      FROM v_growth_NRT_RC2013
                       ")
 
 growth.region.query <- ("SELECT
                           *
-                        FROM v_growth_NRT_RC2012_Type
+                        FROM v_growth_NRT_RC2013_Type
                         ")
 
 quartile.query <- ("SELECT
@@ -170,7 +170,7 @@ quartile.query <- ("SELECT
                     ,Percent_At_25_Below_50_NPR
                     ,Percent_At_50_Below_75_NPR
                     ,Percent_At_Above_75_NPR
-                    FROM Report_Card.dbo.v_School_Quartile_current_2012
+                    FROM Report_Card.dbo.v_School_Quartile_current_2013
 
                     UNION
 
@@ -185,7 +185,7 @@ quartile.query <- ("SELECT
                     ,Percent_At_25_Below_50_NPR
                     ,Percent_At_50_Below_75_NPR
                     ,Percent_At_Above_75_NPR
-                    FROM Report_Card.dbo.v_Region_Quartile_current_2012
+                    FROM Report_Card.dbo.v_Region_Quartile_current_2013
                   ")
     
 statescore.query <- ("SELECT
@@ -205,8 +205,8 @@ statescore.query <- ("SELECT
             ,District_Scores_Percent
             ,School_Num_Tested
             ,School_Scores_Percent
-            FROM Report_Card.dbo.v_State_Scores_RC_2012
-            WHERE AC_Year = 2012
+            FROM Report_Card.dbo.v_State_Scores_RC_2013
+            WHERE AC_Year = 2013
             AND Score_Grouping_Cat_ID IN (2,3)
 
             UNION
@@ -229,7 +229,7 @@ statescore.query <- ("SELECT
             ,Region_Num_Tested AS School_Num_Tested
             ,Region_Score_Percent AS School_Scores_Percent
             FROM Report_Card.dbo.v_Region_Weighted_State_Scores_Stacked_Graph_current
-            WHERE Academic_Year = 2012
+            WHERE Academic_Year = 2013
             AND Score_Grouping_Cat_ID IN (2,3)
             ")
   
@@ -249,8 +249,8 @@ demographics.query <- ("SELECT
            ,TwoMoreRaces_Students_Percent
            ,Special_Needs_Percent
            ,F_and_R_Meals_Percent
-           FROM Report_Card.dbo.v_Student_Demographics_all2012
-           WHERE PP_ID = 32
+           FROM Report_Card.dbo.v_Student_Demographics_all
+           WHERE PP_ID = 36
 
            UNION
 
@@ -271,7 +271,7 @@ demographics.query <- ("SELECT
            ,Special_Needs_Percent
            ,F_and_R_Meals_Percent
            FROM Report_Card.dbo.v_Region_Student_Demographics_all
-           WHERE PP_ID = 32
+           WHERE PP_ID = 36
            ")
   
 school.raw <- sqlQuery(s, school.query, stringsAsFactors=FALSE)
@@ -285,6 +285,7 @@ retention.raw <- sqlQuery(rc, retention.query, stringsAsFactors=FALSE)
 quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
 statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
+region.attainment.raw <- sqlQuery(as, region.attainment.query, stringsAsFactors=FALSE)
 footnotes.raw <- read.csv(paste(data.path,"footnotes.csv", sep=""), header=TRUE, stringsAsFactors=FALSE)
 
 odbcClose(s)
