@@ -1,7 +1,7 @@
 ###########################################################################################################
 #Project: HTML Report Generator                                                                           #
 #Written By: Mike Hilton                                                                                  #
-#Last Updated: 11-13-13                                                                                   #
+#Last Updated: 12-3-13                                                                                   #
 ###########################################################################################################
 rm(list=ls())
 
@@ -12,7 +12,7 @@ if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/
 
 pulldata <- 1
 
-formatdata <- 0
+formatdata <- 1
 
 publishdata_html <- 0
 
@@ -34,11 +34,11 @@ library(markdown)
 while(pulldata == 1) {
   
 #Declare ODBC connections
-s <- odbcConnect('Schools_prod')
-c <- odbcConnect('Clusters_prod')
-rc <- odbcConnect('Report_Card_prod')
+s <- odbcConnect('Schools_stage')
+c <- odbcConnect('Clusters_stage')
+rc <- odbcConnect('Report_Card_stage')
 as <- odbcConnect('Attainment_stage')
-ss <- odbcConnect('State_Scores_prod')
+ss <- odbcConnect('Report_Card_prod')
   
 #Declare SQL Queries
 school.query <- ("SELECT
@@ -65,6 +65,21 @@ school.query <- ("SELECT
             AND PP_ID = 36
             ORDER BY Site_ID
             ")
+
+square.footage.query <- (
+              "SELECT
+               S.School_ID AS Site_ID
+              ,S.Cluster_ID
+              ,building_square_footage
+              FROM Schools.dbo.Schools S
+              JOIN DP_Production.dbo.School_Profiles SP
+              ON S.School_ID = SP.School_ID
+              JOIN DP_Production.dbo.Space_Information I
+              ON SP.Profile_ID = I.Profile_ID
+              WHERE Academic_Year_Closed IS NULL
+              AND Year_Opened < 2013
+              AND PP_ID = 39"
+  )
 
 region.query <- ("SELECT
               C.Cluster_ID AS Site_ID
@@ -126,7 +141,7 @@ fte.query <- ("SELECT
                   School_ID AS Site_ID
                   ,Cluster_ID
                   ,FTE
-                  ,REPORT_CARD_2012
+                  ,REPORT_CARD_2013
                   FROM v_Teacher_Counts_By_Academic_Year_Region_RC2013
                   WHERE REPORT_CARD_2013 = 'INCLUDED'
                   AND FTE IS NOT NULL
@@ -147,11 +162,11 @@ retention.query <- ("SELECT
 
 
 ##Note I kept this query on a separate file because it's FUCKING HUGE.
-source("Alumni_query.R")
+source("Alumni_R_query.R")
 
 growth.query <- ("SELECT
                       *
-                      FROM v_growth_NRT_RC2013
+                      FROM v_growth_NRT_RC2013_SL
                       ")
 
 growth.region.query <- ("SELECT
@@ -212,7 +227,7 @@ statescore.query <- ("SELECT
             UNION
 
             SELECT
-             State AS State_ID
+             State_ID
             ,2 AS Site_Level
             ,Academic_Year AS AC_Year
             ,Grade
@@ -280,13 +295,15 @@ schoolleader.raw <- sqlQuery(s, schoolleader.query, stringsAsFactors = FALSE)
 growth.raw <- sqlQuery(rc, growth.query, stringsAsFactors=FALSE)
 growth.region.raw <- sqlQuery(rc, growth.region.query, stringsAsFactors=FALSE)
 attrition.raw <- sqlQuery(rc, attrition.query, stringsAsFactors=FALSE)
+squarefoot.raw <- sqlQuery(s, square.footage.query, stringsAsFactors=FALSE)
 fte.raw <- sqlQuery(rc, fte.query, stringsAsFactors=FALSE)
 retention.raw <- sqlQuery(rc, retention.query, stringsAsFactors=FALSE)
 quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
-statescore.raw <- sqlQuery(rc, statescore.query, stringsAsFactors=FALSE)
+statescore.raw <- sqlQuery(ss, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
-region.attainment.raw <- sqlQuery(as, region.attainment.query, stringsAsFactors=FALSE)
+#region.attainment.raw <- sqlQuery(as, region.attainment.query, stringsAsFactors=FALSE)
 footnotes.raw <- read.csv(paste(data.path,"footnotes.csv", sep=""), header=TRUE, stringsAsFactors=FALSE)
+staterating.raw <- read.csv(paste(data.path,"2012-13_state_ratings.csv", sep=""), header=TRUE, stringsAsFactors=FALSE)
 
 odbcClose(s)
 odbcClose(c)
@@ -299,6 +316,7 @@ dput(school.raw, paste(data.path,"school.raw.Rda", sep=""))
 dput(region.raw, paste(data.path,"region.raw.Rda", sep=""))
 dput(schoolleader.raw, paste(data.path,"schoolleader.raw.Rda", sep=""))
 dput(attrition.raw, paste(data.path,"attrition.raw.Rda", sep=""))
+dput(squarefoot.raw , paste(data.path,"squarefoot.raw.Rda", sep=""))
 dput(fte.raw, paste(data.path,"fte.raw.Rda", sep=""))
 dput(retention.raw, paste(data.path,"retention.raw.Rda", sep=""))
 dput(growth.raw, paste(data.path,"growth.raw.Rda", sep=""))
@@ -307,6 +325,10 @@ dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
 dput(demographics.raw, paste(data.path,"demographics.raw.Rda", sep=""))
 dput(footnotes.raw, paste(data.path,"footnotes.raw.Rda", sep=""))
+dput(staterating.raw, paste(data.path,"staterating.raw.Rda", sep=""))
+dput(attainment.region.raw, paste(data.path,"attainment.region.raw.Rda", sep=""))
+dput(assessment.region.raw, paste(data.path,"assessment.region.raw.Rda", sep=""))
+dput(assessment.school.raw, paste(data.path,"assessment.school.raw.Rda", sep=""))
 
 #write.csv(statescore.raw, file = 'statescore_raw.csv')
   
@@ -320,6 +342,7 @@ school.raw <- dget(paste(data.path,"school.raw.Rda", sep=""))
 region.raw <- dget(paste(data.path,"region.raw.Rda", sep=""))
 schoolleader.raw <- dget(paste(data.path,"schoolleader.raw.Rda", sep=""))
 attrition.raw <- dget(paste(data.path,"attrition.raw.Rda", sep=""))
+squarefoot.raw <- dget(paste(data.path,"squarefoot.raw.Rda", sep=""))
 fte.raw <- dget(paste(data.path,"fte.raw.Rda", sep=""))
 retention.raw <- dget(paste(data.path,"retention.raw.Rda", sep=""))
 growth.raw <- dget(paste(data.path,"growth.raw.Rda", sep=""))
@@ -328,6 +351,10 @@ quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
 statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
 demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
 footnotes.raw <- dget(paste(data.path,"footnotes.raw.Rda", sep=""))
+staterating.raw <- dget(paste(data.path,"staterating.raw.Rda", sep=""))
+attainment.region.raw <- dget(paste(data.path,"attainment.region.raw.Rda", sep=""))
+assessment.region.raw <- dget(paste(data.path,"assessment.region.raw.Rda", sep=""))
+assessment.school.raw <- dget(paste(data.path,"assessment.school.raw.Rda", sep=""))
 
 
 ###########################################format school data########################################
@@ -365,6 +392,10 @@ attrition.mod <- attrition.raw
 attrition.mod$Attrition_Rate <- round(attrition.mod$Attrition_Rate, digits = 0)
 attrition.mod$attrition_print <- paste(as.character(attrition.mod$Attrition_Rate), "%", sep="")
 
+#############################################format square footage data##############################
+squarefoot.mod <- squarefoot.raw
+squarefoot.mod$squarefoot_print <- paste(as.character(squarefoot.mod$building_square_footage), " sq ft.", sep="")
+
 ############################################format fte data##########################################
 fte.mod <- fte.raw
 fte.mod <- ddply(fte.mod, .(Site_ID), summarize, teachers = sum(FTE))
@@ -395,6 +426,25 @@ retention.mod$print <- paste(retention.mod$percent, "%", sep="")
 
 ############################################format footnotes if needed###############################
 footnotes.mod <- footnotes.raw
+
+############################################formate state rating data################################
+staterating.mod <- staterating.raw
+#removes sites where there is no state rating.
+staterating.mod <- staterating.mod[staterating.mod$Rating.System != "N/A",]
+
+########################################format Alumni Salesforce stuff###############################
+attainment.region.mod <- attainment.region.raw
+attainment.region.mod$grad_print <- (attainment.region.mod$Grad_Rate * 100)
+attainment.region.mod$grad_print <- paste(attainment.region.mod$grad_print, "%", sep="")
+attainment.region.mod$grad_count <- paste(attainment.region.mod$Graduated, "/", attainment.region.mod$Denominator, sep="")
+attainment.region.mod$matric_print <- (attainment.region.mod$Matric_Rate * 100)
+attainment.region.mod$matric_print <- paste(attainment.region.mod$matric_print, "%", sep="")
+attainment.region.mod$matric_count <- <- paste(attainment.region.mod$Matriculated, "/", attainment.region.mod$Denominator, sep="")
+
+
+
+assessment.region.mod <-assessment.region.raw
+assessment.school.mod <- assessment.school.raw
 
 ############################################format growth data#######################################
 growth.mod <- growth.raw
@@ -462,6 +512,9 @@ statescore.mod$score_level <- gsub("District", "Local_District", statescore.mod$
 statescore.mod$order <- (ifelse(statescore.mod$score_level == "KIPP_Scores_Percent", 1, ifelse(statescore.mod$score_level == "Local_District_Scores_Percent", 2, 3)))
 #set ordering for graphs
 statescore.mod$order <- as.integer(paste(statescore.mod$order, statescore.mod$Score_Grouping_Cat_ID, sep=""))
+#fix Texas labels
+statescore.mod$Score_Grouping_Name <- gsub("Met the Standard", "Level II", statescore.mod$Score_Grouping_Name)
+statescore.mod$Score_Grouping_Name <- gsub("Commended Performance", "Level III", statescore.mod$Score_Grouping_Name)
 #set labels for buckets
 statescore.mod$score_stack <- paste(statescore.mod$score_level, statescore.mod$Score_Grouping_Name, sep= "_")
 #replace underscores
@@ -490,6 +543,9 @@ statescore.mod$Grade <- gsub("Literature & Composition", "Lit. & Comp.", statesc
 statescore.mod$Grade <- gsub("Global History & Geography", "Global Hist. & Geog.", statescore.mod$Grade)
 statescore.mod$Grade <- gsub("Comprehensive English", "Comp. Eng.", statescore.mod$Grade)
 statescore.mod$Grade <- gsub("Living Environment", "Living Env.", statescore.mod$Grade)
+
+#fix Texas labeling
+
 
 #round floating point scores
 statescore.mod$score <- round(statescore.mod$score, 0)
@@ -526,14 +582,15 @@ demographics.mod <- rename(demographics.mod, replace=c("Male_Students_Percent" =
                                                        "Total_Students_Num" = "Total Students"
                                                  ))
 demographics.mod <- demographics.mod[,c(1,2,3,4,5,6,7,8,9,13,12,10,11)]
-                                                                                                                         
-                                      
+
+
 
 #save data
 dput(school.mod, paste(data.path, "school.mod.Rda", sep=""))
 dput(region.mod, paste(data.path, "region.mod.Rda", sep=""))
 dput(schoolleader.mod, paste(data.path, "schoolleader.mod.Rda", sep=""))
 dput(attrition.mod, paste(data.path, "attrition.mod.Rda", sep=""))
+dput(squarefoot.mod ,paste(data.path, "squarefoot.mod.Rda", sep=""))
 dput(fte.mod, paste(data.path, "fte.mod.Rda", sep=""))
 dput(fte.region.mod, paste(data.path, "fte.region.mod.Rda", sep=""))
 dput(retention.mod, paste(data.path, "retention.mod.Rda", sep=""))
@@ -543,6 +600,10 @@ dput(quartile.mod, paste(data.path, "quartile.mod.Rda", sep=""))
 dput(statescore.mod, paste(data.path,"statescore.mod.Rda", sep =""))
 dput(demographics.mod, paste(data.path,"demographics.mod.Rda", sep=""))
 dput(footnotes.mod, paste(data.path,"footnotes.mod.Rda", sep=""))
+dput(staterating.mod, paste(data.path,"staterating.mod.Rda", sep=""))
+dput(attainment.region.mod, paste(data.path,"attainment.region.mod.Rda", sep=""))
+dput(assessment.region.mod, paste(data.path,"assessment.region.mod.Rda", sep=""))
+dput(assessment.school.mod, paste(data.path,"assessment.school.mod.Rda", sep=""))
 
 #write.csv(statescore.mod, file = 'statescores_mod.csv')
 break
@@ -550,12 +611,13 @@ break
 
 #########################################Generate site-level HTML reports###################################
 while(publishdata_html == 1) {    
-  
+
 #get data
 school.mod <- dget(paste(data.path,"school.mod.Rda", sep=""))
 region.mod <- dget(paste(data.path,"region.mod.Rda", sep=""))
 schoolleader.mod <- dget(paste(data.path,"schoolleader.mod.Rda", sep=""))
 attrition.mod <- dget(paste(data.path,"attrition.mod.Rda", sep=""))
+squarefoot.mod <- dget(paste(data.path,"squarefoot.mod.Rda", sep=""))
 fte.mod <- dget(paste(data.path, "fte.mod.Rda", sep=""))
 fte.region.mod <- dget(paste(data.path, "fte.region.mod.Rda", sep=""))
 retention.mod <- dget(paste(data.path, "retention.mod.Rda", sep=""))
@@ -565,6 +627,10 @@ quartile.mod <- dget(paste(data.path,"quartile.mod.Rda", sep=""))
 statescore.mod <- dget(paste(data.path,"statescore.mod.Rda", sep=""))
 demographics.mod <- dget(paste(data.path,"demographics.mod.Rda", sep=""))
 footnotes.mod <- dget(paste(data.path,"footnotes.mod.Rda", sep=""))
+staterating.mod <- dget(paste(data.path,"staterating.mod.Rda", sep=""))
+attainment.region.mod <- dget(paste(data.path,"attainment.region.mod.Rda", sep=""))
+assessment.region.mod <- dget(paste(data.path,"assessment.region.mod.Rda", sep=""))
+assessment.school.mod <- dget(paste(data.path,"assessment.school.mod.Rda", sep=""))
 
 #set color palettes
 quartile.palette <- c( "#CFCCC1", "#FEBC11","#F7941E", "#E6E6E6") 
@@ -572,17 +638,17 @@ statescore.palette <- c("#BED75A", "#6EB441", "#E6D2C8", "#C3B4A5", "#E6E6E6", "
 race.palette <- c("#2479F2", "#004CD2", "#A8D9FF", "#82FFFF", "#D2D2D2")
 pie.palette <- c("#D2D2D2", "#2479F2")
 
-for(level in c(2)){
+for(level in c(1)){
 
 
 if(level == 1){
 #x <- school.mod$Site_ID
-x <- c(3, 37, 58, 73)
-#x <- c(3, 5, 7, 8, 25, 37, 58, 73, 86, 72, 94)
+#x <- c(3, 25, 26, 42, 72, 36, 46, 47, 61, 75)
+x <- c(49)
 }
 else if(level == 2){
-#x <- region.mod$Site_ID
-x <- c(1,2,3)
+x <- region.mod$Site_ID
+x <- c(33)
 }
 
 for(s in x){
@@ -598,6 +664,11 @@ for(s in x){
   d <- d$Display_Name
   t <- school.mod[school.mod$Site_ID== s,]
   t <- t$Type
+  sq <- squarefoot.mod[squarefoot.mod$Site_ID == s,]
+  sq <- sq$squarefoot_print
+  state.rating <- staterating.mod[staterating.mod$School_ID == s,]
+  state.rating.label <- state.rating$Rating.System
+  state.rating.value <- state.rating$Rating
 
   ppf <- school.mod[school.mod$Site_ID== s,]
   ppf <- ppf$Per_Pupil_Revenue
@@ -607,6 +678,8 @@ for(s in x){
   site.address <- site.address$address
   site.url <- school.mod[school.mod$Site_ID== s,]
   site.url <- site.url$Web_URL
+  phone <- school.mod[school.mod$Site_ID == s,]
+  phone <- phone$Telephone_1
   fte <- fte.mod[fte.mod$Site_ID== s,]
   fte <- fte$teachers
   footnote.1 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 1,]
@@ -630,6 +703,8 @@ for(s in x){
   site.address <- site.address$address
   site.url <- region.mod[region.mod$Site_ID== s,]
   site.url <- site.url$Website
+  phone <- region.mod[region.mod$Site_ID == s,]
+  phone <- phone$Phone_Office
   fte <- fte.region.mod[fte.region.mod$Cluster_ID== s,]
   fte <- fte$teachers
   retention.site <- retention.mod[retention.mod$Site_ID ==s & retention.mod$retention_type == "Retained_School",]
@@ -657,8 +732,9 @@ growth.region.Reading.Elementary <- subset(growth.region.mod$Percent_Met_Growth_
 #############################################set quartile plot#######################################
 
 #Ideally this would be solved by changing the levels order of the Graph_Label to the alphabetical order of sequence...
-#Fuck it.
-ordered_labels <- reorder(unique(quartile.mod$Graph_Label), c(10, 11, 12, 13, 14, 6, 7, 9, 8, 1, 2, 4, 5, 3))
+#Fuck it. 
+#Please note that the order here assigns order based on WHEN THE VALUE SHOWS UP. Not on the order you want each level to be.
+ordered_labels <- reorder(unique(quartile.mod$Graph_Label), c(9, 10, 11, 12, 13, 3, 4, 5, 6, 8, 7, 1, 2))
 #calculates vertical position for bar labels
 quartile.graph <- subset(quartile.mod, (Site_ID== s) & (Site_Level==level))
 

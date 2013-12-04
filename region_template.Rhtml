@@ -286,7 +286,8 @@ end.rcode-->
 <p>
 <!--begin.rcode site.contact, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 cat("<em>","<strong>",site.address,"</strong>","</em>","<br />")
-cat("<strong>",site.url,"</strong>")
+cat("<strong>",site.url,"</strong>","<br />")
+cat("<strong>",phone,"</strong>")
 end.rcode-->
 </p>
 </div>
@@ -295,9 +296,8 @@ end.rcode-->
 <br />
 <p>To Do List: <br />
 <ul>
-<li>Region: Teacher Retention</li>
-<li>Region: Pull in Attainment Data.</li>
-<li>School: Fix CRT Labels.</li>
+<li>Pull in Attainment Data.</li>
+<li>Make it prettier.</li>
 </ul>
 </p>
 </div>
@@ -364,7 +364,7 @@ end.rcode-->
 </div>
 <div class="clear"></div>
 <div class="header-break", align= "center">
-<h1>State Test Results</h1>
+<h1>State Assessment Results</h1>
 </div>
 <div align= "center">
 <p>
@@ -410,16 +410,16 @@ end.rcode-->
 <!--begin.rcode growth.reading, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 
 if(!exists("growth.region.Reading.Elementary") & !exists("growth.region.Reading.Middle")) {cat()} else {cat("<h3>Percent Meeting Growth in Reading</h3>")}
-if(!exists("growth.region.Reading.Elementary")) {cat()} else{cat("<p>","Elementary: ",growth.region.Reading.Elementary,"</p>")}
-if(!exists("growth.region.Reading.Middle")) {cat()} else{cat("<p>","Middle: ",growth.region.Reading.Middle,"</p>")}
+if(length(growth.region.Reading.Elementary)==0) {cat()} else{cat("<p>","Elementary: ",growth.region.Reading.Elementary,"</p>")}
+if(length(growth.region.Reading.Middle)==0) {cat()} else{cat("<p>","Middle: ",growth.region.Reading.Middle,"</p>")}
 end.rcode-->
 </div>
 <div class="right", align="center">
 <!--begin.rcode growth.mathematics, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 
 if(!exists("growth.region.Mathematics.Elementary") & !exists("growth.region.Mathematics.Middle")) {cat()} else {cat("<h3>Percent Meeting Growth in Mathematics</h3>")}
-if(!exists("growth.region.Mathematics.Elementary")) {cat()} else{cat("<p>","Elementary: ",growth.region.Mathematics.Elementary,"</p>")}
-if(!exists("growth.region.Mathematics.Middle")) {cat()} else{cat("<p>","Middle: ",growth.region.Mathematics.Middle,"</p>")}
+if(length(growth.region.Mathematics.Elementary)==0) {cat()} else{cat("<p>","Elementary: ",growth.region.Mathematics.Elementary,"</p>")}
+if(length(growth.region.Mathematics.Middle)==0) {cat()} else{cat("<p>","Middle: ",growth.region.Mathematics.Middle,"</p>")}
 end.rcode-->
 </div>
 </div>

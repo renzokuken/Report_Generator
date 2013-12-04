@@ -286,7 +286,9 @@ end.rcode-->
 <p>
 <!--begin.rcode site.contact, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 cat("<em>","<strong>",site.address,"</strong>","</em>","<br />")
-cat("<strong>",site.url,"</strong>")
+cat("<em>","<strong>",sq,"</strong>","</em>","<br />")
+cat("<strong>",site.url,"</strong>", "<br />")
+cat("<strong>",phone,"</strong>")
 end.rcode-->
 </p>
 </div>
@@ -295,9 +297,9 @@ end.rcode-->
 <br />
 <p>To Do List: <br />
 <ul>
-<li>Region: Teacher Retention</li>
-<li>Region: Pull in Attainment Data.</li>
+<li>Pull in Attainment Data.</li>
 <li>School: Fix CRT Labels.</li>
+<li>Make it prettier.</li>
 </ul>
 </p>
 </div>
@@ -367,7 +369,13 @@ end.rcode-->
 </div>
 <div class="clear"></div>
 <div class="header-break", align= "center">
-<h1>State Test Results</h1>
+<h1>State Assessment Results</h1>
+</div>
+<div class="embolden", align="center">
+  <!--begin.rcode state.rating, warning-FALSE, message=FALSE, echo=FALSE, results='asis'
+cat("<h2>",state.rating.label,"</h2>")
+cat("<p>",state.rating.value,"</p>")
+end.rcode-->
 </div>
 <div align= "center">
 <p>
@@ -411,14 +419,14 @@ end.rcode-->
 <div class="embolden", align= "center">
 <div class="left", align= "center">
 <!--begin.rcode growth.reading, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("growth.Reading")){cat()} else {cat("<h3>Percent Meeting Growth in Reading</h3>")
-cat("<p>",growth.Reading,"</p>")}
+{cat("<h3>Percent Meeting Growth in Reading</h3>")
+if(length(growth.Reading) == 0){cat("<p>N/A</p>")} else cat("<p>",growth.Reading,"</p>")}
 end.rcode-->
 </div>
 <div class="right", align="center">
 <!--begin.rcode growth.mathematics, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("growth.Mathematics")){cat()} else {cat("<h3>Percent Meeting Growth in Mathematics</h3>")
-cat("<p>",growth.Mathematics,"</p>")}
+{cat("<h3>Percent Meeting Growth in Mathematics</h3>")
+if(length(growth.Mathematics) == 0){cat("<p>N/A</p>")} else cat("<p>",growth.Mathematics,"</p>")}
 end.rcode-->
 </div>
 </div>
