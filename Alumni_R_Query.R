@@ -480,6 +480,7 @@ FROM  #tt_Attain_Update
 WHERE Row_Count = 1
 AND Alumni_Type = '8th Grade Completer'
 AND KIPP_HS_Class__c <= 2013
+AND Region_ID IS NOT NULL
 
 GROUP BY Region_ID
 		,Region_Name
@@ -669,6 +670,7 @@ SELECT Region_ID
 	,COUNT(Highest_AP) AS N_AP
 	,CAST(SUM(Passing_AP) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP
 FROM #tt_Score_Join
+WHERE Region_ID <> 15
 GROUP BY Region_ID
 		,Region_Name
 ORDER BY Region_ID
@@ -687,6 +689,7 @@ SELECT School_ID
 FROM #tt_Score_Join S
 JOIN #tt_HS_Lookup H
 ON S.HS_Name = H.School_Name
+WHERE School_ID <> 104
 GROUP BY School_ID
 		,School_Name
 ORDER BY School_ID

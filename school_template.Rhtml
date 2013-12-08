@@ -3,6 +3,7 @@
 <html>
 <head>
 <title>School Verification Template</title>
+<link rel="stylesheet" type="text/css" href="C:\Users\mhilton\Documents\GitHub\Report_Generator\custom.css" media="all">
 </head>
 <!--begin.rcode setup, include=FALSE
 library(knitr)
@@ -11,264 +12,10 @@ opts_knit$set(upload.fun = image_uri)
 knit_patterns$set(header.begin = NULL)
 end.rcode-->
 
-<style>
-h1{
-  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
-    color:#FEBC11;
-    font-size:32px;
-    line-height:34px;
-    letter-spacing:0px;
-    padding: 0px 0 0 0;
-}
-h2 {
-  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
-    color:#FEBC11;
-    font-size:26px;
-    line-height:30px;
-    letter-spacing:0px;
-    page-break-after: avoid; 
-}
-h3 {
-  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
-    color:#FEBC11;
-    font-size:20px;
-    line-height:24px;
-    orphans: 3; widows: 3; 
-    page-break-after: avoid;
-}
-pre code {
-   display: block; padding: 0.5em;
-}
-
-code.r, code.cpp {
-   background-color: #F8F8F8;
-}
-p {
-  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
-  color:#4F4F4F;
-  font-size:14px;
-  line-height:18px;
-  letter-spacing:0px;
-  padding:0px 0 0 0;
-  orphans: 3; widows: 3;
-}
-ul {
-  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
-  color:#4F4F4F;
-  font-size:14px;
-  line-height:18px;
-  letter-spacing:0px;
-  width:600px;
-  padding:0px 0 0 0;
-}
-li {
-  font-family: inherit;
-  color: inherit;
-  font-size: inherit;
-  text-align: left;
-  line-height: inherit;
-  letter-spacing: inherit;
-}
-a, a:visited { 
-      text-decoration: underline; 
-}
-hr { 
-  visibility: hidden;
-  page-break-before: always;
-}
-pre, blockquote { 
-  padding-right: 1em; 
-  page-break-inside: avoid; 
-}
-
-table{
-  border-collapse: separate;
-  border-spacing: 1em 0.5em;
-  background-color: #FFFFFF;
-  color: #4F4F4F;
-  font-size:18px;
-  line-height:0px;
-  letter-spacing:0px;
-  width:350px;
-  padding:4px 4 4 4;
-  border: 2px solid #a1a1a1;
-  border-radius: 25px;
-}
-
-td {
-  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
-  text-align: left;
-  color:#4F4F4F;
-  font-size:16px;
-  border:none;
-  margin: 8px;
-  letter-spacing:0px;
-  line-height: 20px;
-  padding:0px 0 0 0;
-}
-tr, img { 
-      page-break-inside: avoid; 
-      line-height: 2px;
-      background-color: #FFFFFF;
-      border:none;
-}
-/*
-#demographics.graph{
-  border-collapse: separate;
-  border-spacing: 1em 0.5em;
-  background-color: #FFFFFF;
-  color: #4F4F4F;
-  font-size:18px;
-  line-height:0px;
-  letter-spacing:0px;
-  width:800px;
-  padding:4px 4 4 4;
-  border: none;
-}
-*/
-img { 
-      max-width: 100% !important;
-      page-break-before: avoid; 
-}
-/*
-@page :left { 
-  margin: 15mm 20mm 15mm 10mm; 
-}
-     
-@page :right { 
-  margin: 15mm 10mm 15mm 20mm; 
-}
-*/
-.header {
-  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
-  padding: 0px 0 0 0;
-}
-
-.header-break {
-  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
-  padding: 0px 0 0 0;
-  page-break-before: always;
-}
-.piecharts {
-  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
-  color:#4F4F4F;
-  font-size:32px;
-  line-height:36px;
-  letter-spacing:0px;
-  width: 100%;
-  padding:0px 0 0 0;
-}
-.pieleft { 
-  width: 25%;
-  position: absolute;
-  left: 10px;
-  width: 200px;
-  text-align:center; 
-  display:inline; 
-}
-.piemidleft{
-  width: 25%;
-  position: absolute;
-  left: 220px;
-  width:200px;
-  text-align:center; 
-  display:inline; 
-}
-.piemidright{
-  width: 25%; 
-  position: absolute;
-  left: 430px;
-  width:200px;
-  position:absolute;
-  text-align:center; 
-  display:inline;
-}
-.pieright { 
-  width: 25%; 
-  position: absolute;
-  left: 640px;
-  width:200px;
-  text-align:center; 
-  display:inline;
-  padding-right:10px;
-}
-
-.leader p{
-  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
-  color:#4F4F4F;
-  font-size:24px;
-  line-height:26px;
-  letter-spacing:0px;
-  width: 100%;
-  padding:0px 0 0 0;
-}
-
-
-.embolden p{
-  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
-  color:#4F4F4F;
-  font-size:32px;
-  line-height:36px;
-  letter-spacing:0px;
-  width: 100%;
-  padding:0px 0 0 0;
-}
-.left { 
-  width: 40%; 
-  float:left; 
-  text-align:center; 
-  display:inline; 
-  padding-left:80px;
-}
-
-.right { 
-  width: 40%; 
-  float:right; 
-  text-align:center; 
-  display:inline;
-  padding-right:80px;
-}
-
-.clear { 
-  clear:both; 
-}
-.horizontal img{
-display: block;float: left;margin-right: 5px;
-}
-/*
-.child_div_left{
-  float.left;
-  margin-right:5px;
-}
-*/
-#border
-{
-margin-left: auto;
-margin-right: auto;
-border: 2px solid #a1a1a1;
-
-padding: 10px 40px; 
-background: #FFFFFF;
-width: 900px;
-border-radius: 25px;
-}
-.tableborder
-{
-border: 2px solid #a1a1a1;
-border-bottom-style: dashed #a1a1a1;
-border-left-style: none;
-border-right-style: none;
-padding: 10px 10px; 
-background: #EEEEEE;
-width: 40%;
-border-radius: 25px;
-}
-
-</style>
 <body>
 
 <div id = "border", align = "center">
-<div align= "right">
+<div align="right">
 <p>
 <!--begin.rcode time.stamp, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 cat(paste("Last Updated:",format(Sys.time(), "%B %d %Y")))
@@ -286,30 +33,29 @@ end.rcode-->
 <p>
 <!--begin.rcode site.contact, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 cat("<em>","<strong>",site.address,"</strong>","</em>","<br />")
-cat("<em>","<strong>",sq,"</strong>","</em>","<br />")
 cat("<strong>",site.url,"</strong>", "<br />")
-cat("<strong>",phone,"</strong>")
+cat("<strong>",phone,"</strong>","<br />")
+cat("<strong>Grades: </strong>", grade_range,"<br />")
+cat("<strong>building sq. footage: </strong>",sq,"<br />")
 end.rcode-->
 </p>
 </div>
 <div align= "center">
 <p>This is the Report Card Verification Template. All Graphs and data are pulled, formatted and visualized in R, and then exported into an HTML/CSS template.<br />
 <br />
-<p>To Do List: <br />
-<ul>
-<li>Pull in Attainment Data.</li>
-<li>School: Fix CRT Labels.</li>
-<li>Make it prettier.</li>
-</ul>
+<br />
+<br />
+<br />
+<br />
 </p>
 </div>
 <div class="leader", align = "center">
 <h1>School Leader</h1>
-<p>
+<h3>
 <!--begin.rcode leader.name, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 cat("<b>", site.leader, "</b>")
 end.rcode-->
-</p>
+</h3>
 </div>
 
 <div class="header", align= "center">
@@ -342,7 +88,7 @@ end.rcode-->
 </tr>
 </table>
 
-<div align="center">
+<div class="demographics", align="center">
 <!--begin.rcode demographics.table, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
 data(demographics.graph)
 demographics.table <- xtable(demographics.table)
@@ -352,18 +98,60 @@ end.rcode-->
 print(demographics.table, include.rownames=TRUE, include.colnames=FALSE, type="html")
 end.rcode-->
 </div>
-<div class="embolden", align= "center">
-<div class="left", align= "center">
+<div class="two-col-container", align="center">
+<div class="two-col-left", align= "center">
 <!--begin.rcode fte.print, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 cat("<h2>Number of Teachers (FTE)</h2>")
-cat("<p>",fte,"</p>")
+cat("<h3>",fte,"</h3>")
 end.rcode-->
 
 </div>
-<div class="right", align="center">
+<div class="two-col-right", align="center">
 <!--begin.rcode ppf.rate, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 cat("<h2>Per Pupil Funding</h2>")
-if(!exists("ppf")) {cat()} else {cat("<p>",ppf,"</p>")}
+if(!exists("ppf")) {cat()} else {cat("<h3>",ppf,"</h3>")}
+end.rcode-->
+</div>
+</div>
+<div class="header", align= "center">
+<h1>
+<!--begin.rcode attainment.header, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(length(matric_print)==0 | length(grad_print)==0) {cat()} else{cat("Atttainment")}
+end.rcode-->
+</h1>
+</div>
+<div class="two-col-container", align="center">
+<div class="two-col-left", align="center">
+<!--begin.rcode graduation, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(length(grad_print)==0) {cat()} else{cat("<h2>HS Graduation</h2>", "<h3><strong>", grad_print, "</strong></h3>", "<p>(",grad_count, " students)</p>", sep="")}
+end.rcode-->
+</div>
+<div class="two-col-right", align= "center">
+<!--begin.rcode matriculation, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(length(matric_print)==0) {cat()} else{cat("<h2>College Matriculation</h2>", "<h3><strong>", matric_print, "</strong></h3>", "<p>(",matric_count, " students)</p>", sep="")}
+end.rcode-->
+</div>
+</div>
+<div class="spacer" style="clear: both;"></div>
+<div class="header", align= "center">
+<!--begin.rcode assessment.header, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(t == 'H') {cat("<h1>HS Assessment</h1>")} else{cat()}
+end.rcode-->
+</div>
+<div class="three-col-container">
+<div class="three-col-left">
+<!--begin.rcode act, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if( t !='H' & length(act_score)==0) {cat()} else{cat("<h2>Avg. ACT</h2>", "<h3><strong>", act_score, "</strong>", " <p>(",act_count, " graduating seniors)</p>", sep="")}
+end.rcode-->
+</div>
+<div class="three-col-center">
+<!--begin.rcode sat, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if( t!='H' & length(sat_score)==0) {cat()} else{cat("<h2>Avg. SAT</h2>", "<h3><strong>", sat_score, "</strong>", " <p>(",sat_count, " graduating seniors)</p>", sep="")}
+end.rcode-->
+</div>
+<div class= "three-col-right">
+<!--begin.rcode ap, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(t!='H' & length(ap_score)==0) {cat()} else{cat("<h2>AP (% 3+)</h2>", "<h3><strong>", ap_score, "</strong>", " <p>(",ap_count, " graduating seniors)</p>", sep="")}
 end.rcode-->
 </div>
 </div>
@@ -371,10 +159,10 @@ end.rcode-->
 <div class="header-break", align= "center">
 <h1>State Assessment Results</h1>
 </div>
-<div class="embolden", align="center">
+<div align="center">
   <!--begin.rcode state.rating, warning-FALSE, message=FALSE, echo=FALSE, results='asis'
 cat("<h2>",state.rating.label,"</h2>")
-cat("<p>",state.rating.value,"</p>")
+cat("<h3>",state.rating.value,"</h3>")
 end.rcode-->
 </div>
 <div align= "center">
@@ -413,22 +201,21 @@ if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) 
 end.rcode-->
 </p>
 </div>
-<div class="header", align= "center">
+<div class="clear"></div>
+<div class="header-break", align= "center">
 <h1>MAP Results</h1>
 </div>
-<div class="embolden", align= "center">
-<div class="left", align= "center">
+<div class="two-col-left", align= "center">
 <!--begin.rcode growth.reading, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 {cat("<h3>Percent Meeting Growth in Reading</h3>")
-if(length(growth.Reading) == 0){cat("<p>N/A</p>")} else cat("<p>",growth.Reading,"</p>")}
+if(length(growth.Reading) == 0){cat("<h3>N/A</h3>")} else cat("<h3>",growth.Reading,"</h3>")}
 end.rcode-->
 </div>
-<div class="right", align="center">
+<div class="two-col-right", align="center">
 <!--begin.rcode growth.mathematics, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 {cat("<h3>Percent Meeting Growth in Mathematics</h3>")
-if(length(growth.Mathematics) == 0){cat("<p>N/A</p>")} else cat("<p>",growth.Mathematics,"</p>")}
+if(length(growth.Mathematics) == 0){cat("<h3>N/A</h3>")} else cat("<h3>",growth.Mathematics,"</h3>")}
 end.rcode-->
-</div>
 </div>
 <div class="clear"></div>
 <div class="header", align= "center">

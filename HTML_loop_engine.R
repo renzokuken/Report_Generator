@@ -10,11 +10,11 @@ wd <- getwd()
 if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator")
 #Declare globals
 
-pulldata <- 1
+pulldata <- 0
 
 formatdata <- 1
 
-publishdata_html <- 0
+publishdata_html <- 1
 
 data.path <<- paste("C:/Users/mhilton/Documents/R_Data/HTML_Reports/")
 report.path <<- paste("C:/Users/mhilton/Documents/R_Graphs/HTML_Reports/")
@@ -54,6 +54,8 @@ school.query <- ("SELECT
             ,S.State
             ,S.Zipcode
             ,S.Telephone_1
+            ,S.Grade_From
+            ,S.Grade_Thru
             ,SP.Per_Pupil_Revenue
             FROM Schools.dbo.Schools S
             JOIN DP_Production.dbo.School_Profiles SP
@@ -161,7 +163,7 @@ retention.query <- ("SELECT
                         ")
 
 
-##Note I kept this query on a separate file because it's FUCKING HUGE.
+##Note: I'm keeping this query on a separate file because it's FUCKING HUGE.
 source("Alumni_R_query.R")
 
 growth.query <- ("SELECT
@@ -301,7 +303,6 @@ retention.raw <- sqlQuery(rc, retention.query, stringsAsFactors=FALSE)
 quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
 statescore.raw <- sqlQuery(ss, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
-#region.attainment.raw <- sqlQuery(as, region.attainment.query, stringsAsFactors=FALSE)
 footnotes.raw <- read.csv(paste(data.path,"footnotes.csv", sep=""), header=TRUE, stringsAsFactors=FALSE)
 staterating.raw <- read.csv(paste(data.path,"2012-13_state_ratings.csv", sep=""), header=TRUE, stringsAsFactors=FALSE)
 
@@ -365,6 +366,7 @@ school.mod$graph_name <- gsub(",","",school.mod$graph_name)
 school.mod$graph_name <- gsub(" ","_",school.mod$graph_name)
 #format mailing address
 school.mod$address <- paste(school.mod$Address_1," ", school.mod$Address_2," ", school.mod$City,", ", school.mod$State," ", as.character(school.mod$Zipcode), sep="")
+school.mod$grade_range <- paste(school.mod$Grade_From,"-",school.mod$Grade_Thru, sep="")
 
 ###########################################format region data########################################
 region.mod <- region.raw
@@ -434,17 +436,52 @@ staterating.mod <- staterating.mod[staterating.mod$Rating.System != "N/A",]
 
 ########################################format Alumni Salesforce stuff###############################
 attainment.region.mod <- attainment.region.raw
+assessment.region.mod <-assessment.region.raw
+assessment.school.mod <- assessment.school.raw
+
+#separate single sites for attainment
+attainment.region.mod$level <- ifelse(attainment.region.mod$Region_ID > 1000,  1,  2)
+attainment.region.mod$Region_ID <- ifelse(attainment.region.mod$level == 1, attainment.region.mod$Region_ID / 100, attainment.region.mod$Region_ID)
+#format graduation rates
 attainment.region.mod$grad_print <- (attainment.region.mod$Grad_Rate * 100)
 attainment.region.mod$grad_print <- paste(attainment.region.mod$grad_print, "%", sep="")
 attainment.region.mod$grad_count <- paste(attainment.region.mod$Graduated, "/", attainment.region.mod$Denominator, sep="")
+#format matriculation rates
 attainment.region.mod$matric_print <- (attainment.region.mod$Matric_Rate * 100)
 attainment.region.mod$matric_print <- paste(attainment.region.mod$matric_print, "%", sep="")
-attainment.region.mod$matric_count <- <- paste(attainment.region.mod$Matriculated, "/", attainment.region.mod$Denominator, sep="")
+attainment.region.mod$matric_count <- paste(attainment.region.mod$Matriculated, "/", attainment.region.mod$Denominator, sep="")
 
 
 
-assessment.region.mod <-assessment.region.raw
-assessment.school.mod <- assessment.school.raw
+#region assessment
+assessment.region.mod$level <- 2
+#format ACT participation
+assessment.region.mod$act_pct <- (round((assessment.region.mod$N_ACT / assessment.region.mod$N_Students),2) * 100)
+assessment.region.mod$act_pct <- paste(assessment.region.mod$act_pct, "%", sep="")
+assessment.region.mod$act_count <- paste(assessment.region.mod$N_ACT, "/", assessment.region.mod$N_Students, sep="")
+#format SAT participation
+assessment.region.mod$sat_pct <- (round((assessment.region.mod$N_SAT / assessment.region.mod$N_Students),2) * 100)
+assessment.region.mod$sat_pct <- paste(assessment.region.mod$sat_pct, "%", sep="")
+assessment.region.mod$sat_count <- paste(assessment.region.mod$N_SAT, "/", assessment.region.mod$N_Students, sep="")
+#format AP passing rate
+assessment.region.mod$ap_print <- (assessment.region.mod$Passing_AP * 100)
+assessment.region.mod$ap_print <- paste(assessment.region.mod$ap_print, "%", sep="")
+assessment.region.mod$ap_count <- paste(assessment.region.mod$N_AP, "/", assessment.region.mod$N_Students, sep="")
+
+#school assessment
+assessment.school.mod$level <- 1
+#format ACT participation
+assessment.school.mod$act_pct <- (round((assessment.school.mod$N_ACT / assessment.school.mod$N_Students),2) * 100)
+assessment.school.mod$act_pct <- paste(assessment.school.mod$act_pct, "%", sep="")
+assessment.school.mod$act_count <- paste(assessment.school.mod$N_ACT, "/", assessment.school.mod$N_Students, sep="")
+#format SAT participation
+assessment.school.mod$sat_pct <- (round((assessment.school.mod$N_SAT / assessment.school.mod$N_Students),2) * 100)
+assessment.school.mod$sat_pct <- paste(assessment.school.mod$sat_pct, "%", sep="")
+assessment.school.mod$sat_count <- paste(assessment.school.mod$N_SAT, "/", assessment.school.mod$N_Students, sep="")
+#format AP passing rate
+assessment.school.mod$ap_print <- (assessment.school.mod$Passing_AP * 100)
+assessment.school.mod$ap_print <- paste(assessment.school.mod$ap_print, "%", sep="")
+assessment.school.mod$ap_count <- paste(assessment.school.mod$N_AP, "/", assessment.school.mod$N_Students, sep="")
 
 ############################################format growth data#######################################
 growth.mod <- growth.raw
@@ -455,10 +492,20 @@ growth.region.mod$Percent_Met_Growth_Target <- paste(as.character(growth.region.
 
 ###########################################format quartile data######################################
 quartile.mod <- quartile.raw
+#hardcode TECH Valley's numbers
+quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",5,"Fall 5th (13)",20,60,20,0))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",6,"Fall 6th (13)",13,32,38,17))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",7,"Fall 7th (13)",17,38,35,10))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",8,"Fall 8th (13)",7,14,58,21))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",5,"Fall 5th (13)",80,20,0,0))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",6,"Fall 6th (13)",30,43,20,9))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",7,"Fall 7th (13)",13,38,36,14))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",8,"Fall 8th (13)",0,19,47,35))
+
 
 #set graph values for percent_in_quartile
 quartile.mod$Percent_Below_25_NPR <- (quartile.mod$Percent_Below_25_NPR * -1)
-quartile.mod$Percent_At_25_Below_50_NPR <- (quartile.mod$Percent_At_25_Below_50_NPR * -1)
+quartile.mod$Percent_At_25_Below_50_NPR <- (quartile.mod$Percent_At_25_Below_50_NPR* -1)
 
 #reshape data wide to long
 quartile.mod <- reshape(quartile.mod,
@@ -513,7 +560,7 @@ statescore.mod$order <- (ifelse(statescore.mod$score_level == "KIPP_Scores_Perce
 #set ordering for graphs
 statescore.mod$order <- as.integer(paste(statescore.mod$order, statescore.mod$Score_Grouping_Cat_ID, sep=""))
 #fix Texas labels
-statescore.mod$Score_Grouping_Name <- gsub("Met the Standard", "Level II", statescore.mod$Score_Grouping_Name)
+statescore.mod$Score_Grouping_Name <- gsub("Met the standard", "Level II", statescore.mod$Score_Grouping_Name)
 statescore.mod$Score_Grouping_Name <- gsub("Commended Performance", "Level III", statescore.mod$Score_Grouping_Name)
 #set labels for buckets
 statescore.mod$score_stack <- paste(statescore.mod$score_level, statescore.mod$Score_Grouping_Name, sep= "_")
@@ -638,17 +685,17 @@ statescore.palette <- c("#BED75A", "#6EB441", "#E6D2C8", "#C3B4A5", "#E6E6E6", "
 race.palette <- c("#2479F2", "#004CD2", "#A8D9FF", "#82FFFF", "#D2D2D2")
 pie.palette <- c("#D2D2D2", "#2479F2")
 
-for(level in c(1)){
+for(level in c(1,2)){
 
 
 if(level == 1){
-#x <- school.mod$Site_ID
-#x <- c(3, 25, 26, 42, 72, 36, 46, 47, 61, 75)
-x <- c(49)
+x <- school.mod$Site_ID
+#x <- c(5, 46, 98, 36, 66, 87, 94)
+#x <- c(49)
 }
 else if(level == 2){
 x <- region.mod$Site_ID
-x <- c(33)
+#x <- c(3,31)
 }
 
 for(s in x){
@@ -664,6 +711,8 @@ for(s in x){
   d <- d$Display_Name
   t <- school.mod[school.mod$Site_ID== s,]
   t <- t$Type
+  grade_range <- school.mod[school.mod$Site_ID== s,]
+  grade_range <- grade_range$grade_range
   sq <- squarefoot.mod[squarefoot.mod$Site_ID == s,]
   sq <- sq$squarefoot_print
   state.rating <- staterating.mod[staterating.mod$School_ID == s,]
@@ -688,6 +737,19 @@ for(s in x){
   footnote.2 <- footnote.2$Text
   footnote.3 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 3,]
   footnote.3 <- footnote.3$Text
+
+  hs_scores <- assessment.school.mod[assessment.school.mod$School_ID == s,]
+  sat_score <- hs_scores$AVG_SAT
+  sat_count <-hs_scores$sat_count
+  act_score <- hs_scores$AVG_ACT
+  act_count <- hs_scores$act_count
+  ap_score <- hs_scores$ap_print
+  ap_count <- hs_scores$ap_count
+  attainment <- attainment.region.mod[attainment.region.mod$Region_ID == s & attainment.region.mod$level==1,]
+  grad_print <- attainment$grad_print
+  grad_count <- attainment$grad_count
+  matric_print <- attainment$matric_print
+  matric_count <- attainment$matric_count
 } else if(level == 2){
   n <- region.mod[region.mod$Site_ID == s,]
   n <- n$graph_name
@@ -711,8 +773,19 @@ for(s in x){
   retention.site <- retention.site$print
   retention.kipp <- retention.mod[retention.mod$Site_ID ==s & retention.mod$retention_type == "Retained_KIPP",]
   retention.kipp <- retention.kipp$print
-  #region.fte <- fte.region.mod[fte.region.mod$Site_ID== s,]
-  #region.fte <- fte$teachers
+
+  hs_scores <- assessment.region.mod[assessment.region.mod$Region_ID == s,]
+  sat_score <- hs_scores$AVG_SAT
+  sat_count <-hs_scores$sat_count
+  act_score <- hs_scores$AVG_ACT
+  act_count <- hs_scores$act_count
+  ap_score <- hs_scores$ap_print
+  ap_count <- hs_scores$ap_count
+  attainment <- attainment.region.mod[attainment.region.mod$Region_ID == s & attainment.region.mod$level==2,]
+  grad_print <- attainment$grad_print
+  grad_count <- attainment$grad_count
+  matric_print <- attainment$matric_print
+  matric_count <- attainment$matric_count
 }
   print(s)
   print(n)
@@ -721,8 +794,13 @@ attrition.print <- subset(attrition.mod$attrition_print, (attrition.mod$Site_ID=
 
 #############################################subset growth metrics###################################
 if(level==1){
+  if(s==46){
+  growth.Mathematics <- "98%"
+  growth.Reading <- "69%"
+  }else{
 growth.Mathematics <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID== s) & (growth.mod$Sub_Test_Name == "Mathematics"))
 growth.Reading <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID== s) & (growth.mod$Sub_Test_Name == "Reading"))
+}
 }else if(level==2){
 growth.region.Mathematics.Middle <- subset(growth.region.mod$Percent_Met_Growth_Target, (growth.region.mod$Region_ID == s) & (growth.region.mod$Sub_Test_Name == "Mathematics") & (growth.region.mod$Type == "M"))
 growth.region.Mathematics.Elementary <- subset(growth.region.mod$Percent_Met_Growth_Target, (growth.region.mod$Region_ID == s) & (growth.region.mod$Sub_Test_Name == "Mathematics") & (growth.region.mod$Type == "E"))
@@ -734,7 +812,7 @@ growth.region.Reading.Elementary <- subset(growth.region.mod$Percent_Met_Growth_
 #Ideally this would be solved by changing the levels order of the Graph_Label to the alphabetical order of sequence...
 #Fuck it. 
 #Please note that the order here assigns order based on WHEN THE VALUE SHOWS UP. Not on the order you want each level to be.
-ordered_labels <- reorder(unique(quartile.mod$Graph_Label), c(9, 10, 11, 12, 13, 3, 4, 5, 6, 8, 7, 1, 2))
+ordered_labels <- reorder(unique(quartile.mod$Graph_Label), c(9, 10, 11, 12, 13, 3, 4, 5, 6, 8, 14, 15, 16, 17, 7, 1, 2))
 #calculates vertical position for bar labels
 quartile.graph <- subset(quartile.mod, (Site_ID== s) & (Site_Level==level))
 
@@ -791,8 +869,8 @@ quartile.plot <- quartile.plot + facet_grid(~ Sub_Test_Name)
 quartile.plot <- quartile.plot + xlab('Season')
 quartile.plot <- quartile.plot + theme(axis.title.x = element_text(size = rel(1.8)),
                                        axis.ticks.x = element_blank(),
-                                       axis.text.x = element_text(size = rel(1.8), angle=30, color = "#4F4F4F"), 
-                                       strip.text.x = element_text(size = rel(2.5), face='bold', color = "#FEBC11"),
+                                       axis.text.x = element_text(size = rel(1.8), angle=30, color = "#333333"), 
+                                       strip.text.x = element_text(size = rel(2.5), face='bold', color = "#333333"),
                                        axis.title.y = element_blank(), 
                                        axis.ticks.y = element_blank(),
                                        strip.text.y = element_blank(),
@@ -817,10 +895,12 @@ quartile.plot <- quartile.plot + guides(fill = guide_legend(nrow = 2))
 
 statescore.graph <- subset(statescore.mod, (Site_ID == s) & (Site_Level == level))
 if(level==1){
+statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, detail_pos = (((cumsum(score)) - 0.5*score)))
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, label = sum(score))
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, pos = (cumsum(score) + 15))
 }
 else if(level==2){
+statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_level), transform, detail_pos = (((cumsum(score)) - 0.5*score)))
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_level), transform, label = sum(score))
 statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_level), transform, pos = (cumsum(score) + 15))
 }
@@ -862,7 +942,7 @@ for (sub in sublist){
                       statescore.plot <- statescore.plot + theme(axis.title.x = element_blank(),
                                                                  axis.ticks.x = element_blank(),
                                                                  axis.text.x = element_blank(),
-                                                                 strip.text.x = element_text(size = 16, face = 'bold', color = "#4F4F4F"),
+                                                                 strip.text.x = element_text(size = 16, face = 'bold', color = "#333333"),
                                                                  axis.title.y = element_blank(),
                                                                  axis.text.y = element_blank(),
                                                                  axis.ticks.y = element_blank(),
@@ -880,7 +960,8 @@ for (sub in sublist){
                                                                  panel.margin = unit(0.75, "cm"),
                                                                  panel.grid.major = element_blank(), 
                                                                  panel.grid.minor = element_blank())
-                      statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 5.1)
+                      statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 4.8)
+                      statescore.plot <- statescore.plot + geom_text(aes(label = score, y = detail_pos), size = 4.1)
                       statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
 
                       assign(paste("statescore.plot.", sub, sep = ""), statescore.plot)
@@ -915,7 +996,7 @@ race.graph$ymax <- cumsum(race.graph$fraction)
 race.graph$ymin <- c(0, head(race.graph$ymax, n=-1))
 #begin ggplot
 race.plot <- ggplot(race.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
-race.plot <- race.plot + geom_text(data=NULL, x = 0, y = 0, label = race.max, colour="#4F4F4F", size = 42)
+race.plot <- race.plot + geom_text(data=NULL, x = 0, y = 0, label = race.max, colour="#333333", size = 42)
 race.plot <- race.plot + scale_fill_manual(values = race.palette, breaks=c("Percent Black", "Percent Latino", "Percent Asian", "Percent White", "Percent Other"))
 race.plot <- race.plot + geom_rect()
 race.plot <- race.plot + coord_polar(theta="y")
@@ -930,7 +1011,7 @@ race.plot <- race.plot + theme(axis.ticks.x = element_blank(),
                                          legend.position = "none",
                                          strip.background = element_blank(),
                                          plot.background = element_blank(),
-                                         plot.title = element_text(size = rel(3), face='bold', color = "#FEBC11"),
+                                         plot.title = element_text(size = 42, face='bold', color = "#333333"),
                                          strip.background = element_blank(),
                                          panel.background = element_blank(),
                                          panel.grid.major = element_blank(),
@@ -954,7 +1035,7 @@ frl.graph$ymax <- cumsum(frl.graph$fraction)
 frl.graph$ymin <- c(0, head(frl.graph$ymax, n=-1))
 #begin ggplot
 frl.plot <- ggplot(frl.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
-frl.plot <- frl.plot + geom_text(data=NULL, x = 0, y = 0, label = frl.print, colour="#4F4F4F", size = 42)
+frl.plot <- frl.plot + geom_text(data=NULL, x = 0, y = 0, label = frl.print, colour="#333333", size = 42)
 frl.plot <- frl.plot + scale_fill_manual(values = pie.palette, breaks=c("Percent Free and Reduced Price Lunch", "anti"))
 frl.plot <- frl.plot + geom_rect()
 frl.plot <- frl.plot + coord_polar(theta="y")
@@ -969,7 +1050,7 @@ frl.plot <- frl.plot + theme(axis.ticks.x = element_blank(),
                                          legend.position = "none",
                                          strip.background = element_blank(),
                                          plot.background = element_blank(),
-                                         plot.title = element_text(size = rel(3), face='bold', color = "#FEBC11"),
+                                         plot.title = element_text(size = 64, face='bold', color = "#333333"),
                                          strip.background = element_blank(),
                                          panel.background = element_blank(),
                                          panel.grid.major = element_blank(),
@@ -992,7 +1073,7 @@ attrition.graph$ymax <- cumsum(attrition.graph$fraction)
 attrition.graph$ymin <- c(0, head(attrition.graph$ymax, n=-1))
 #begin ggplot
 attrition.plot <- ggplot(attrition.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
-attrition.plot <- attrition.plot + geom_text(data=NULL, x = 0, y = 0, label = attrition.print, colour="#4F4F4F", size = 42)
+attrition.plot <- attrition.plot + geom_text(data=NULL, x = 0, y = 0, label = attrition.print, colour="#333333", size = 42)
 attrition.plot <- attrition.plot + scale_fill_manual(values = pie.palette, breaks=c("Attrition_Rate", "anti"))
 attrition.plot <- attrition.plot + geom_rect()
 attrition.plot <- attrition.plot + coord_polar(theta="y")
@@ -1008,7 +1089,7 @@ attrition.plot <- attrition.plot + theme(axis.ticks.x = element_blank(),
                                          legend.position = "none",
                                          strip.background = element_blank(),
                                          plot.background = element_blank(),
-                                         plot.title = element_text(size = rel(3), face='bold', color = "#FEBC11"),
+                                         plot.title = element_text(size = 64, face='bold', color = "#333333"),
                                          strip.background = element_blank(),
                                          panel.background = element_blank(),
                                          panel.border = element_blank(),
@@ -1034,7 +1115,7 @@ sped.graph$ymax <- cumsum(sped.graph$fraction)
 sped.graph$ymin <- c(0, head(sped.graph$ymax, n=-1))
 #begin ggplot
 sped.plot <- ggplot(sped.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
-sped.plot <- sped.plot + geom_text(data=NULL, x = 0, y = 0, label = sped.print, colour="#4F4F4F", size = 42)
+sped.plot <- sped.plot + geom_text(data=NULL, x = 0, y = 0, label = sped.print, colour="#333333", size = 42)
 sped.plot <- sped.plot + scale_fill_manual(values = pie.palette, breaks=c("Percent Special Needs", "anti"))
 sped.plot <- sped.plot + geom_rect()
 sped.plot <- sped.plot + coord_polar(theta="y")
@@ -1049,7 +1130,7 @@ sped.plot <- sped.plot + theme(axis.ticks.x = element_blank(),
                                          legend.position = "none",
                                          strip.background = element_blank(),
                                          plot.background = element_blank(),
-                                         plot.title = element_text(size = rel(3), face='bold', color = "#FEBC11"),
+                                         plot.title = element_text(size = 64, face='bold', color = "#333333"),
                                          strip.background = element_blank(),
                                          panel.background = element_blank(),
                                          panel.grid.major = element_blank(),
@@ -1057,6 +1138,8 @@ sped.plot <- sped.plot + theme(axis.ticks.x = element_blank(),
 
 #
 #####################################Knit to HTML Template###########################################
+
+
 
 if(level==1){
 knit("school_template.Rhtml")
@@ -1077,6 +1160,16 @@ if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) 
 if(!exists("footnote.1")) {cat()} else {rm(footnote.1)}
 if(!exists("footnote.2")) {cat()} else {rm(footnote.2)}
 if(!exists("footnote.3")) {cat()} else {rm(footnote.3)}
+if(!exists("grad_print")) {cat()} else {rm(grad_print)}
+if(!exists("grad_count")) {cat()} else {rm(grad_count)}
+if(!exists("matric_print")) {cat()} else {rm(matric_print)}
+if(!exists("matric_count")) {cat()} else {rm(matric_count)}
+if(!exists("act_pct")) {cat()} else {rm(matric_count)}
+if(!exists("act_count")) {cat()} else {rm(matric_count)}
+if(!exists("sat_pct")) {cat()} else {rm(matric_count)}
+if(!exists("sat_count")) {cat()} else {rm(matric_count)}
+if(!exists("ap_pct")) {cat()} else {rm(matric_count)}
+if(!exists("ap_count")) {cat()} else {rm(matric_count)}
 
 ######################################Convert HTML to PDF#############################################
 #set I/O variables
@@ -1085,7 +1178,7 @@ output <- paste(report.path,"PDF_Reports/",f,"/",n,".pdf", sep="")
 
 #updates Batch file. NOTE: This file lives in the wkhtmltopdf directory.
 fileConn<-file("C:/Program Files (x86)/wkhtmltopdf/pdf_send.bat")
-writeLines(paste("wkhtmltopdf"," ",input," ",output, sep=""), fileConn)
+writeLines(paste("wkhtmltopdf -T 0in -B 0in -L 0in -R 0in --page-width 940px --disable-smart-shrinking"," ",input," ",output, sep=""), fileConn)
 close(fileConn)  
 
 #call batch file for command line conversion
