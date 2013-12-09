@@ -39,8 +39,8 @@ end.rcode-->
 </p>
 </div>
 <div align= "center">
-<p>This is the Report Card Verification Template. All Graphs and data are pulled, formatted and visualized in R, and then exported into an HTML/CSS template.<br />
-<br />
+<p>This is a summary of all <strong>Region Level</strong> data the Foundation plans on including in the 2013 KIPP Annual Report Card. Please verify that all data is accurate as of <strong>November, 2013</strong>, and obtain <strong>ED sign-off</strong> for it's inclusion in the report card. If you have any questions, please contact Mike Hilton at <a href="mailto:mhilton@kipp.org">mhilton@kipp.org</a>.<br />
+
 <br />
 <br />
 </p>
@@ -102,6 +102,8 @@ cat("<h2>Teacher Retention</h2>")
 cat("<h3>","Retained in Position: ",retention.site, "<br />", "Retained in KIPP: ",retention.kipp,"</h3>")
 end.rcode-->
 </div>
+<div class="clear"></div>
+<div class="header-break", align= "center">
 <div align= "center">
 <h1>Attainment</h1>
 </div>
@@ -138,45 +140,23 @@ if(length(ap_score)==0) {cat("<h2>AP (% 3+)</h2><h3>","N/A","</h3>")} else{cat("
 end.rcode-->
 </div>
 </div>
-<div class="clear"></div>
-<div class="header-break", align= "center">
+<div class="spacer" style="clear: both;"></div>
 <h1>State Assessment Results</h1>
 </div>
 <div align= "center">
-<p>
 <!--begin.rcode statescore.label, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(nrow(statescore.graph) == 0){cat("<p>No grades were tested for the 2012-13 Academic Year</p>")}
 end.rcode-->
-<!--begin.rcode statescore.graph.1, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+<!--begin.rcode statescore.graph.1, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=330, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {cat("<h2>Reading</h2>")
 																				 plot(statescore.plot.1)
 																				} else {cat()}
 end.rcode-->
-<!--begin.rcode statescore.graph.2, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+<!--begin.rcode statescore.graph.2, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=330, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) {cat("<h2>Mathematics</h2>")
 																				 plot(statescore.plot.2)
 																				} else {cat()}
 end.rcode-->
-</p>
-</div>
-<p>
-<div class="header-break", align="center">
-<!--begin.rcode statescore.graph.3, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("statescore.graph.3")) {cat()} else if(nrow(statescore.graph.3) > 0) {cat("<h2>Science</h2>")
-																				 plot(statescore.plot.3)
-																				} else {cat()}
-end.rcode-->
-<!--begin.rcode statescore.graph.4, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("statescore.graph.4")) {cat()} else if(nrow(statescore.graph.4) > 0) {cat("<h2>Writing</h2>")
-																				 plot(statescore.plot.4)
-																				} else {cat()}
-end.rcode-->
-<!--begin.rcode statescore.graph.5, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) {cat("<h2>Social Studies</h2>")
-																				 plot(statescore.plot.5)
-																				} else {cat()}
-end.rcode-->
-</p>
 </div>
 <div class="clear"></div>
 <div class="header-break", align= "center">

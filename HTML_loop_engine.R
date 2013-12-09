@@ -685,12 +685,12 @@ statescore.palette <- c("#BED75A", "#6EB441", "#E6D2C8", "#C3B4A5", "#E6E6E6", "
 race.palette <- c("#2479F2", "#004CD2", "#A8D9FF", "#82FFFF", "#D2D2D2")
 pie.palette <- c("#D2D2D2", "#2479F2")
 
-for(level in c(1,2)){
+for(level in c(1)){
 
 
 if(level == 1){
 x <- school.mod$Site_ID
-#x <- c(5, 46, 98, 36, 66, 87, 94)
+#x <- c(19, 5, 46, 98, 36, 66, 87, 94)
 #x <- c(49)
 }
 else if(level == 2){
