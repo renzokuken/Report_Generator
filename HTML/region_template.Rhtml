@@ -3,7 +3,7 @@
 <html>
 <head>
 <title>Region Verification Template</title>
-<link rel="stylesheet" type="text/css" href="C:\Users\mhilton\Documents\GitHub\Report_Generator\custom.css" media="all">
+<link rel="stylesheet" type="text/css" href="C:\Users\mhilton\Documents\GitHub\Report_Generator\CSS\custom.css" media="all">
 </head>
 <!--begin.rcode setup, include=FALSE
 library(knitr)
@@ -126,17 +126,17 @@ end.rcode-->
 <div class="three-col-container">
 <div class="three-col-left">
 <!--begin.rcode act, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(length(act_score)==0) {cat("<h2>Avg. ACT</h2><h3>","N/A","</h3>")} else{cat("<h2>ACT</h2>", "<h3><strong>", act_score, "</strong>", " <p>(",act_count, " graduating seniors)</p>", sep="")}
+if(length(act_score)==0) {cat("<h2>Avg. ACT</h2><h3>","N/A","</h3>")} else{cat("<h2>Avg. ACT</h2>", "<h3><strong>", act_score, "</strong>", " <p>(",act_count, " graduating seniors)</p>", sep="")}
 end.rcode-->
 </div>
 <div class="three-col-center">
 <!--begin.rcode sat, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(length(sat_score)==0) {cat("<h2>Avg. SAT</h2><h3>","N/A","</h3>")} else{cat("<h2>SAT</h2>", "<h3><strong>", sat_score, "</strong>", " <p>(",sat_count, " graduating seniors)</p>", sep="")}
+if(length(sat_score)==0) {cat("<h2>Avg. SAT</h2><h3>","N/A","</h3>")} else{cat("<h2>Avg. SAT</h2>", "<h3><strong>", sat_score, "</strong>", " <p>(",sat_count, " graduating seniors)</p>", sep="")}
 end.rcode-->
 </div>
 <div class= "three-col-right">
 <!--begin.rcode ap, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(length(ap_score)==0) {cat("<h2>AP (% 3+)</h2><h3>","N/A","</h3>")} else{cat("<h2>AP</h2>", "<h3><strong>", ap_score, "</strong>", " <p>(",ap_count, " graduating seniors)</p>", sep="")}
+if(length(ap_score)==0) {cat("<h2>AP (% 3+)</h2><h3>","N/A","</h3>")} else{cat("<h2>AP (% 3+)</h2>", "<h3><strong>", ap_score, "</strong>", " <p>(",ap_count, " graduating seniors)</p>", sep="")}
 end.rcode-->
 </div>
 </div>

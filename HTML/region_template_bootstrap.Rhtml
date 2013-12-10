@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<title>Region Verification Template</title>
+<link rel="stylesheet" type="text/css" href="C:\Users\mhilton\Documents\Bootstrap\dist\css\bootstrap.css" media="all">
+</head>
+<!--begin.rcode setup, include=FALSE, tidy=FALSE
+library(knitr)
+# to base64 encode images
+opts_knit$set(upload.fun = image_uri)
+knit_patterns$set(header.begin = NULL)
+knit_hooks$set(hook_plot_bootstrap = function(x, options) {
+  # pull out all the relevant plot options
+  fig.num = options$fig.num = options$fig.num %n% 1L
+  fig.cur = options$fig.cur %n% 1L
+  ai = options$fig.show == 'asis'
+  plot1 = ai || fig.cur <= 1L; plot2 = ai || fig.cur == fig.num
+  paste(
+    d1, .img.tag(
+      .upload.url(x), options$out.width, options$out.height, .img.cap(options),
+      paste(c(options$out.extra, 'class="plot"'), collapse = ' ')
+    ), d2, '\n', sep = ''
+  )
+})
+end.rcode-->
+<style>
+
+.tabletest table{
+  border-collapse: separate;
+  border-spacing: 1em 0.5em;
+  background-color: #FFFFFF;
+  color: #4F4F4F;
+  font-size:18px;
+  line-height:0px;
+  letter-spacing:0px;
+  padding:4px 4 4 4;
+  border: 2px solid #a1a1a1;
+  border-radius: 25px;
+}
+
+.tabletest td {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  text-align: left;
+  color:#4F4F4F;
+  font-size:16px;
+  border:none;
+  margin: 8px;
+  letter-spacing:0px;
+  line-height: 20px;
+  padding:0px 0 0 0;
+}
+.tabletest tr { 
+      page-break-inside: avoid; 
+      line-height: 2px;
+      background-color: #FFFFFF;
+      border:none;
+}
+
+</style>
+
+
+<!--
+<style>
+h1{
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+    color:#FEBC11;
+    font-size:32px;
+    line-height:34px;
+    letter-spacing:0px;
+    padding: 0px 0 0 0;
+}
+h2 {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+    color:#FEBC11;
+    font-size:26px;
+    line-height:30px;
+    letter-spacing:0px;
+    page-break-after: avoid; 
+}
+h3 {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+    color:#FEBC11;
+    font-size:20px;
+    line-height:24px;
+    orphans: 3; widows: 3; 
+    page-break-after: avoid;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+p {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:0px;
+  padding:0px 0 0 0;
+  orphans: 3; widows: 3;
+}
+ul {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:14px;
+  line-height:18px;
+  letter-spacing:0px;
+  width:600px;
+  padding:0px 0 0 0;
+}
+li {
+  font-family: inherit;
+  color: inherit;
+  font-size: inherit;
+  text-align: left;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+a, a:visited { 
+      text-decoration: underline; 
+}
+hr { 
+  visibility: hidden;
+  page-break-before: always;
+}
+pre, blockquote { 
+  padding-right: 1em; 
+  page-break-inside: avoid; 
+}
+
+table{
+  border-collapse: separate;
+  border-spacing: 1em 0.5em;
+  background-color: #FFFFFF;
+  color: #4F4F4F;
+  font-size:18px;
+  line-height:0px;
+  letter-spacing:0px;
+  width:350px;
+  padding:4px 4 4 4;
+  border: 2px solid #a1a1a1;
+  border-radius: 25px;
+}
+
+td {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  text-align: left;
+  color:#4F4F4F;
+  font-size:16px;
+  border:none;
+  margin: 8px;
+  letter-spacing:0px;
+  line-height: 20px;
+  padding:0px 0 0 0;
+}
+tr, img { 
+      page-break-inside: avoid; 
+      line-height: 2px;
+      background-color: #FFFFFF;
+      border:none;
+}
+
+/*
+#demographics.graph{
+  border-collapse: separate;
+  border-spacing: 1em 0.5em;
+  background-color: #FFFFFF;
+  color: #4F4F4F;
+  font-size:18px;
+  line-height:0px;
+  letter-spacing:0px;
+  width:800px;
+  padding:4px 4 4 4;
+  border: none;
+}
+*/
+img { 
+      max-width: 100% !important;
+      page-break-before: avoid; 
+}
+/*
+@page :left { 
+  margin: 15mm 20mm 15mm 10mm; 
+}
+     
+@page :right { 
+  margin: 15mm 10mm 15mm 20mm; 
+}
+body
+{
+background-color:#a1a1a1;
+*/
+.header {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+  padding: 0px 0 0 0;
+}
+
+.header-break {
+  font-family: "FullerSansDT-Bold",Calibri, Helvetica, sans-serif;
+  padding: 0px 0 0 0;
+  page-break-before: always;
+}
+.piecharts {
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:32px;
+  line-height:36px;
+  letter-spacing:0px;
+  width: 100%;
+  padding:0px 0 0 0;
+}
+.pieleft { 
+  width: 25%;
+  position: absolute;
+  left: 10px;
+  width: 200px;
+  text-align:center; 
+  display:inline; 
+}
+.piemidleft{
+  width: 25%;
+  position: absolute;
+  left: 220px;
+  width:200px;
+  text-align:center; 
+  display:inline; 
+}
+.piemidright{
+  width: 25%; 
+  position: absolute;
+  left: 430px;
+  width:200px;
+  position:absolute;
+  text-align:center; 
+  display:inline;
+}
+.pieright { 
+  width: 25%; 
+  position: absolute;
+  left: 640px;
+  width:200px;
+  text-align:center; 
+  display:inline;
+  padding-right:10px;
+}
+
+.leader p{
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:24px;
+  line-height:26px;
+  letter-spacing:0px;
+  width: 100%;
+  padding:0px 0 0 0;
+}
+
+
+.embolden p{
+  font-family: "FullerSansDT",Calibri, Helvetica, sans-serif;
+  color:#4F4F4F;
+  font-size:32px;
+  line-height:36px;
+  letter-spacing:0px;
+  width: 100%;
+  padding:0px 0 0 0;
+}
+.left { 
+  width: 40%; 
+  float:left; 
+  text-align:center; 
+  display:inline; 
+  padding-left:80px;
+}
+
+.right { 
+  width: 40%; 
+  float:right; 
+  text-align:center; 
+  display:inline;
+  padding-right:80px;
+}
+
+.clear { 
+  clear:both; 
+}
+.horizontal img{
+display: block;float: left;margin-right: 5px;
+}
+/*
+.child_div_left{
+  float.left;
+  margin-right:5px;
+}
+*/
+#border
+{
+margin-left: auto;
+margin-right: auto;
+width: 900px;
+/*
+border: 2px solid #a1a1a1;
+padding: 10px 40px; 
+background: #FFFFFF;
+border-radius: 25px;
+*/
+}
+.tableborder
+{
+border: 2px solid #a1a1a1;
+border-bottom-style: dashed #a1a1a1;
+border-left-style: none;
+border-right-style: none;
+padding: 10px 10px; 
+background: #EEEEEE;
+width: 40%;
+border-radius: 25px;
+}
+
+
+</style>
+-->
+<body style="width: 978px;", align="center">
+<div class="container", align="center">
+<div class="text-center">
+<div class="row">
+<div class= "span4 offset 8">
+<p>
+<!--begin.rcode time.stamp, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat(paste("Last Updated:",format(Sys.time(), "%B %d %Y")))
+end.rcode-->
+</p>
+</div>
+</div>
+<div class="row">
+<div class="span6 offset2">
+<h1>
+<!--begin.rcode site.name, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat(d)
+end.rcode-->
+</h1>
+</div>
+</div>
+<div class="row">
+<div class="span4 offset4">
+<p>
+<!--begin.rcode site.contact, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat("<em>","<strong>",site.address,"</strong>","</em>","<br />")
+cat("<strong>",site.url,"</strong>","<br />")
+cat("<strong>",phone,"</strong>")
+end.rcode-->
+</p>
+</div>
+</div>
+<div ="row">
+<div class="span12">
+<p>This is the Report Card Verification Template. All Graphs and data are pulled, formatted and visualized in R, and then exported into an HTML/CSS template.<br />
+<br />
+<p>To Do List: <br />
+<ul>
+<li>Pull in Attainment Data.</li>
+<li>Make it prettier.</li>
+</ul>
+</p>
+</div>
+</div>
+<div class="row">
+<div class="span4 offset4">
+<h1>Region Leader</h1>
+<p>
+<!--begin.rcode leader.name, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat("<b>", site.leader, "</b>")
+end.rcode-->
+</p>
+</div>
+</div>
+
+<div class="row">
+<div class="span4 offset4">
+<h1>Region Demographics</h1>
+</div>
+</div>
+<div class="row">
+<div class="col-xs-2 col-xs-offset-3">
+<!--begin.rcode frl.graph, fig.width=8, fig.height=8, out.width=190, out.height=190, out.extra='', warning=FALSE, message=FALSE, echo=FALSE, results='hold'
+plot(frl.plot)
+end.rcode-->
+</div>
+<div class="col-xs-2">
+<!--begin.rcode attrition.graph, fig.width=8, fig.height=8, out.width=190, out.height=190, out.extra='', warning=FALSE, message=FALSE, echo=FALSE, results='hold'
+plot(attrition.plot)
+end.rcode-->
+</div>
+<div class="col-xs-2">
+<!--begin.rcode sped.graph, fig.width=8, fig.height=8, out.width=190, out.height=190, out.extra='', warning=FALSE, message=FALSE, echo=FALSE, results='hold'
+plot(sped.plot)
+end.rcode-->
+</div>
+</div>
+
+
+<div class="row">
+<div class="col-xs-4 col-xs-offset-4">
+<div class="tabletest">
+<!--begin.rcode demographics.table, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE
+data(demographics.graph)
+demographics.table <- xtable(demographics.table)
+end.rcode-->
+
+<!--begin.rcode out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+print(demographics.table, include.rownames=TRUE, include.colnames=FALSE, type="html")
+end.rcode-->
+</div>
+</div>
+</div>
+<div class="row">
+<div class="col-xs-4 col-xs-offset-4">
+<!--begin.rcode fte.print, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+cat("<h2>Number of Teachers (FTE)</h2>")
+cat("<p>",fte,"</p>")
+cat("<h2>Teacher Retention</h2>")
+cat("<p>","Retained in Position: ",retention.site,"</p>")
+cat("<p>", "Retained in KIPP: ",retention.kipp,"</p>")
+end.rcode-->
+</div>
+</div>
+<div class="row">
+<div class="col-sm-4 col-sm-offset-4">
+<h2>Attainment</h2>
+</div>
+</div>
+<div class="row">
+<div class="col-sm-4 offset-sm-2">
+<!--begin.rcode graduation, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("grad_print")) {cat()} else{cat("<h2>HS Graduation</h2>", "<p><strong>", grad_print, "</strong>", " (",grad_count, " students)</p>", sep="")}
+end.rcode-->
+</div>
+<div class="col-sm-4">
+<!--begin.rcode matriculation, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("matric_print")) {cat()} else{cat("<h2>College Matriculation</h2>", "<p><strong>", matric_print, "</strong>", " (",matric_count, " students)</p>", sep="")}
+end.rcode-->
+</div>
+</div>
+<div class="row">
+<div class="span4 offset4">
+<h2>HS Assessment</h2>
+</div>
+</div>
+<div class="row">
+<div class="span4">
+<!--begin.rcode act, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("act_score")) {cat("<h2>ACT</h2><p>","N/A","</p>")} else{cat("<h2>ACT</h2>", "<p><strong>", act_score, "</strong>", " (",act_pct, ")</p>")}
+end.rcode-->
+</div>
+<div class="span4 offset4">
+<!--begin.rcode sat, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("sat_score")) {cat("<h2>SAT</h2><p>","N/A","</p>")} else{cat("<h2>SAT</h2>", "<p><strong>", sat_score, "</strong>", " (",sat_pct, ")</p>")}
+end.rcode-->
+</div>
+<div class="span4 offset8">
+<!--begin.rcode ap, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("ap_score")) {cat("<h2>AP</h2><p>","N/A","</p>")} else{cat("<h2>AP</h2>", "<p><strong>", ap_score, "</strong>", " (",ap_pct, ")</p>")}
+end.rcode-->
+</div>
+</div>
+<div class="row">
+<div class="span4 offset4">
+<h1>State Assessment Results</h1>
+</div>
+</div>
+<div class="row">
+<div class="span12">
+<p>
+<!--begin.rcode statescore.label, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(nrow(statescore.graph) == 0){cat("<p>No grades were tested for the 2012-13 Academic Year</p>")}
+end.rcode-->
+<!--begin.rcode statescore.graph.1, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {cat("<h2>Reading</h2>")
+																				 plot(statescore.plot.1)
+																				} else {cat()}
+end.rcode-->
+<!--begin.rcode statescore.graph.2, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) {cat("<h2>Mathematics</h2>")
+																				 plot(statescore.plot.2)
+																				} else {cat()}
+end.rcode-->
+</p>
+</div>
+</div>
+<div class="row">
+<div class="span12">
+<p>
+<!--begin.rcode statescore.graph.3, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.3")) {cat()} else if(nrow(statescore.graph.3) > 0) {cat("<h2>Science</h2>")
+																				 plot(statescore.plot.3)
+																				} else {cat()}
+end.rcode-->
+<!--begin.rcode statescore.graph.4, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.4")) {cat()} else if(nrow(statescore.graph.4) > 0) {cat("<h2>Writing</h2>")
+																				 plot(statescore.plot.4)
+																				} else {cat()}
+end.rcode-->
+<!--begin.rcode statescore.graph.5, fig.width=10, fig.height=6.25, fig.align='center', out.width=700, out.height=400, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) {cat("<h2>Social Studies</h2>")
+																				 plot(statescore.plot.5)
+																				} else {cat()}
+end.rcode-->
+</p>
+</div>
+</div>
+<div class="row">
+<div class="span4 offset4">
+<h1>MAP Results</h1>
+</div>
+</div>
+<div class="row">
+<div class="span4 offset2">
+<!--begin.rcode growth.reading, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+
+if(!exists("growth.region.Reading.Elementary") & !exists("growth.region.Reading.Middle")) {cat()} else {cat("<h3>Percent Meeting Growth in Reading</h3>")}
+if(length(growth.region.Reading.Elementary)==0) {cat()} else{cat("<p>","Elementary: ",growth.region.Reading.Elementary,"</p>")}
+if(length(growth.region.Reading.Middle)==0) {cat()} else{cat("<p>","Middle: ",growth.region.Reading.Middle,"</p>")}
+end.rcode-->
+</div>
+</div>
+<div class="row">
+<div class="span4 offset6">
+<!--begin.rcode growth.mathematics, out.width = 4, out.height= 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+
+if(!exists("growth.region.Mathematics.Elementary") & !exists("growth.region.Mathematics.Middle")) {cat()} else {cat("<h3>Percent Meeting Growth in Mathematics</h3>")}
+if(length(growth.region.Mathematics.Elementary)==0) {cat()} else{cat("<p>","Elementary: ",growth.region.Mathematics.Elementary,"</p>")}
+if(length(growth.region.Mathematics.Middle)==0) {cat()} else{cat("<p>","Middle: ",growth.region.Mathematics.Middle,"</p>")}
+end.rcode-->
+</div>
+</div>
+<div class="row">
+<div class="span12">
+<!--begin.rcode quartile.graph, fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(nrow(quartile.graph) > 0) {cat("<h2>Quartile Distribution</h2>")
+							  plot(quartile.plot)
+							  } else {cat("<h2>Quartile Distribution</h2>")
+							  		  cat("No grades were tested for the 2012-13 Academic Year")
+							  		  }
+end.rcode-->
+</div>
+</div>
+<div class="row">
+<div class="span4 offset4">
+<h1>Footnotes</h1>
+<ul>
+<!--begin.rcode footnote.1, out.width = 6, out.height = 1, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("footnote.1")) {cat()} else if(length(footnote.1) > 0) cat("<li>", footnote.1, "</li>") else {cat("None.")}
+end.rcode-->
+<!--begin.rcode footnote.2, out.width = 6, out.height = 1, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("footnote.2")) {cat()} else if(length(footnote.2) > 0) cat("<li>", footnote.2, "</li>") else {cat()}
+end.rcode-->
+<!--begin.rcode footnote.3, out.width = 6, out.height = 1, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
+if(!exists("footnote.3")) {cat()} else if(length(footnote.3) > 0) cat("<li>", footnote.3, "</li>") else {cat()}
+end.rcode-->
+</ul>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

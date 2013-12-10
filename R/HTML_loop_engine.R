@@ -1,13 +1,13 @@
 ###########################################################################################################
 #Project: HTML Report Generator                                                                           #
 #Written By: Mike Hilton                                                                                  #
-#Last Updated: 12-3-13                                                                                   #
+#Last Updated: 12-10-13                                                                                   #
 ###########################################################################################################
 rm(list=ls())
 
 #set directory
 wd <- getwd()
-if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator")
+if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator/R") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator/R")
 #Declare globals
 
 pulldata <- 0
@@ -583,6 +583,12 @@ statescore.mod$Grade[statescore.mod$Grade=="99" & statescore.mod$Site_Level==1] 
 statescore.mod$Grade[statescore.mod$Site_ID ==58 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 58 & statescore.mod$Site_Level==1], statescore.mod$Grade[statescore.mod$Site_ID == 58 & statescore.mod$Site_Level==1], sep = " ")
 statescore.mod$Grade[statescore.mod$Site_ID ==73 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 73 & statescore.mod$Site_Level==1], statescore.mod$Grade[statescore.mod$Site_ID == 73 & statescore.mod$Site_Level==1], sep = " ")
 statescore.mod$Grade[statescore.mod$Site_ID ==37 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 37 & statescore.mod$Site_Level==1], statescore.mod$Grade[statescore.mod$Site_ID == 37 & statescore.mod$Site_Level==1], sep = " ")
+#fix facet ordering
+statescore.mod$Grade <- factor(statescore.mod$Grade)
+reorder(levels(statescore.mod$Grade), c(8,9,10,1,2,3,4,5,6,7,11,12,13,15,16,14,17,18,19,20,21,22,28,29,23,24,25,26,27,30,31,32,33,34,35,37,36,38,39,40,41,43,42,44,45,46,47,48))
+#statescore.mod$grade_order <- factor(statescore.mod$Grade, levels=c(reorder(levels(statescore.mod$Grade), c(8,9,10,1,2,3,4,5,6,7,11,12,13,15,16,14,17,18,19,20,21,22,28,29,23,24,25,26,27,30,31,32,33,34,35,37,36,38,39,40,41,43,42,44,45,46,47,48))))
+
+
 
 #truncate long names >_<
 statescore.mod$Grade <- gsub("English Language Arts", "ELA", statescore.mod$Grade)
@@ -590,6 +596,14 @@ statescore.mod$Grade <- gsub("Literature & Composition", "Lit. & Comp.", statesc
 statescore.mod$Grade <- gsub("Global History & Geography", "Global Hist. & Geog.", statescore.mod$Grade)
 statescore.mod$Grade <- gsub("Comprehensive English", "Comp. Eng.", statescore.mod$Grade)
 statescore.mod$Grade <- gsub("Living Environment", "Living Env.", statescore.mod$Grade)
+statescore.mod$Grade <- gsub("English I Reading", "Eng I Read.", statescore.mod$Grade)
+statescore.mod$Grade <- gsub("English II Reading", "Eng II Read", statescore.mod$Grade)
+statescore.mod$Grade <- gsub("English III Reading", "Eng III Read.", statescore.mod$Grade)
+statescore.mod$Grade <- gsub("English I Writing", "Eng I Write", statescore.mod$Grade)
+statescore.mod$Grade <- gsub("English II Writing", "Eng II Write", statescore.mod$Grade)
+statescore.mod$Grade <- gsub("English III Writing", "Eng III Write", statescore.mod$Grade)
+statescore.mod$Grade <- gsub("World History", "W. Hist.", statescore.mod$Grade)
+statescore.mod$Grade <- gsub("World Geography", "W. Geog.", statescore.mod$Grade)
 
 #fix Texas labeling
 
@@ -689,13 +703,13 @@ for(level in c(1)){
 
 
 if(level == 1){
-x <- school.mod$Site_ID
-#x <- c(19, 5, 46, 98, 36, 66, 87, 94)
-#x <- c(49)
+#x <- school.mod$Site_ID
+#x <- c(58, 73, 37, 19, 5, 46, 98, 36, 66, 87)
+x <- c(46)
 }
 else if(level == 2){
-x <- region.mod$Site_ID
-#x <- c(3,31)
+#x <- region.mod$Site_ID
+x <- c(18)
 }
 
 for(s in x){
@@ -722,7 +736,7 @@ for(s in x){
   ppf <- school.mod[school.mod$Site_ID== s,]
   ppf <- ppf$Per_Pupil_Revenue
   site.leader <- schoolleader.mod[schoolleader.mod$Site_ID== s,]
-  site.leader <- site.leader$leader_name
+  if(s==46){site.leader <- "Don Applyrs"} else{site.leader <- site.leader$leader_name}
   site.address <- school.mod[school.mod$Site_ID== s,]
   site.address <- site.address$address
   site.url <- school.mod[school.mod$Site_ID== s,]
@@ -795,8 +809,8 @@ attrition.print <- subset(attrition.mod$attrition_print, (attrition.mod$Site_ID=
 #############################################subset growth metrics###################################
 if(level==1){
   if(s==46){
-  growth.Mathematics <- "98%"
-  growth.Reading <- "69%"
+  growth.Mathematics <- "73%"
+  growth.Reading <- "42%"
   }else{
 growth.Mathematics <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID== s) & (growth.mod$Sub_Test_Name == "Mathematics"))
 growth.Reading <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID== s) & (growth.mod$Sub_Test_Name == "Reading"))
@@ -912,6 +926,11 @@ statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_le
 #This loop creates a plot for each CRT umbrella category.
 for (sub in sublist){
                       statescore.graph.loop <- assign(paste("statescore.graph.", sub, sep = ""),subset(statescore.graph, Subtest_Cat_RC_ID == sub))
+
+                      #gradeOrdered <- c(unique(statescore.graph.loop$grade_int))
+
+                      #statescore.graph.loop[with(statescore.graph.loop, order(Grade, as.integer(factor(grade_int, gradeOrdered)))), ]
+
                       #statescore.graph.loop$Grade = reorder(statescore.graph.loop$grade_int)
 
                       statescore.graph.loop$label <- ifelse(statescore.graph.loop$Score_Grouping_Cat_ID == 2, "", statescore.graph.loop$label)
@@ -1142,14 +1161,14 @@ sped.plot <- sped.plot + theme(axis.ticks.x = element_blank(),
 
 
 if(level==1){
-knit("school_template.Rhtml")
+knit("C:/Users/mhilton/Documents/GitHub/Report_Generator/HTML/school_template.Rhtml")
 #hatersgonnahate.jpg
-file.rename(from="school_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
+file.rename(from="C:/Users/mhilton/Documents/GitHub/Report_Generator/R/school_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
 
 }else if(level==2){
 knit("region_template.Rhtml")
 #hatersgonnahate.jpg
-file.rename(from="region_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
+file.rename(from="C:/Users/mhilton/Documents/GitHub/Report_Generator/R/region_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
 }
 #I am a terrible programmer. -MH  
 if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {rm(statescore.graph.1)} else {cat()}
@@ -1157,6 +1176,7 @@ if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) 
 if(!exists("statescore.graph.3")) {cat()} else if(nrow(statescore.graph.3) > 0) {rm(statescore.graph.3)} else {cat()}
 if(!exists("statescore.graph.4")) {cat()} else if(nrow(statescore.graph.4) > 0) {rm(statescore.graph.4)} else {cat()}
 if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) {rm(statescore.graph.5)} else {cat()}
+if(!exists("gradeOrdered")) {cat()} else {rm(gradeOrdered)}
 if(!exists("footnote.1")) {cat()} else {rm(footnote.1)}
 if(!exists("footnote.2")) {cat()} else {rm(footnote.2)}
 if(!exists("footnote.3")) {cat()} else {rm(footnote.3)}
@@ -1182,7 +1202,7 @@ writeLines(paste("wkhtmltopdf -T 0in -B 0in -L 0in -R 0in --page-width 940px --d
 close(fileConn)  
 
 #call batch file for command line conversion
-system("pdf_convert.bat")
+system("C:/Users/mhilton/Documents/GitHub/Report_Generator/BAT/pdf_convert.bat")
 }
 }
 break

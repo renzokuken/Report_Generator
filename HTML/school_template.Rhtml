@@ -3,7 +3,7 @@
 <html>
 <head>
 <title>School Verification Template</title>
-<link rel="stylesheet" type="text/css" href="C:\Users\mhilton\Documents\GitHub\Report_Generator\custom.css" media="all">
+<link rel="stylesheet" type="text/css" href="C:\Users\mhilton\Documents\GitHub\Report_Generator\CSS\custom.css" media="all">
 </head>
 <!--begin.rcode setup, include=FALSE
 library(knitr)
@@ -113,7 +113,7 @@ end.rcode-->
 <div class="header", align= "center">
 <h1>
 <!--begin.rcode attainment.header, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(length(matric_print)==0 | length(grad_print)==0) {cat()} else{cat("Atttainment")}
+if(length(matric_print)==0 | length(grad_print)==0) {cat()} else{cat("Attainment")}
 end.rcode-->
 </h1>
 </div>
@@ -148,7 +148,7 @@ end.rcode-->
 </div>
 <div class= "three-col-right">
 <!--begin.rcode ap, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(t!='H' & length(ap_score)==0) {cat()} else if (t == 'H' & length(ap_score==0)) {cat()} else{cat("<h2>AP (% 3+)</h2>", "<h3><strong>", ap_score, "</strong>", " <p>(",ap_count, " graduating seniors)</p>", sep="")}
+if(t!='H' & length(ap_score)==0) {cat()} else{cat("<h2>AP (% 3+)</h2>", "<h3><strong>", ap_score, "</strong>", " <p>(",ap_count, " graduating seniors)</p>", sep="")}
 end.rcode-->
 </div>
 </div>
