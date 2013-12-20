@@ -490,7 +490,7 @@ SELECT Id
 	,Adv_Degree_Name
 INTO #tt_High_School_RC
 FROM #tt_Attain_Update
-WHERE (KIPP_HS_Class__c = 2013 OR YEAR(HS_Grad_Date) = 2013)
+WHERE YEAR(HS_Grad_Date) = 2013)
 AND KIPP_HS = 1
 AND HS_GRAD = 1
 

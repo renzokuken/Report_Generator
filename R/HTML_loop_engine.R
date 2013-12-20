@@ -1,7 +1,7 @@
 ###########################################################################################################
-#Project: HTML Report Generator                                                                           #
+#Project FORGE: Fast and Optimized R-based Generator of Excellence                                        #
 #Written By: Mike Hilton                                                                                  #
-#Last Updated: 12-10-13                                                                                   #
+#Last Updated: 12-20-13                                                                                   #
 ###########################################################################################################
 rm(list=ls())
 
@@ -10,7 +10,7 @@ wd <- getwd()
 if (wd != "C:/Users/mhilton/Documents/GitHub/Report_Generator/R") setwd("C:/Users/mhilton/Documents/GitHub/Report_Generator/R")
 #Declare globals
 
-pulldata <- 0
+pulldata <- 1
 
 formatdata <- 1
 
@@ -304,6 +304,7 @@ quartile.raw <- sqlQuery(rc, quartile.query, stringsAsFactors=FALSE)
 statescore.raw <- sqlQuery(ss, statescore.query, stringsAsFactors=FALSE)
 demographics.raw <- sqlQuery(rc, demographics.query, stringsAsFactors=FALSE)
 footnotes.raw <- read.csv(paste(data.path,"footnotes.csv", sep=""), header=TRUE, stringsAsFactors=FALSE)
+footnotes.region.raw <- read.csv(paste(data.path,"footnotes.region.csv", sep=""), header=TRUE, stringsAsFactors=FALSE)
 staterating.raw <- read.csv(paste(data.path,"2012-13_state_ratings.csv", sep=""), header=TRUE, stringsAsFactors=FALSE)
 
 odbcClose(s)
@@ -326,6 +327,7 @@ dput(quartile.raw, paste(data.path,"quartile.raw.Rda", sep=""))
 dput(statescore.raw, paste(data.path,"statescore.raw.Rda", sep=""))
 dput(demographics.raw, paste(data.path,"demographics.raw.Rda", sep=""))
 dput(footnotes.raw, paste(data.path,"footnotes.raw.Rda", sep=""))
+dput(footnotes.region.raw, paste(data.path,"footnotes.region.raw.Rda", sep=""))
 dput(staterating.raw, paste(data.path,"staterating.raw.Rda", sep=""))
 dput(attainment.region.raw, paste(data.path,"attainment.region.raw.Rda", sep=""))
 dput(assessment.region.raw, paste(data.path,"assessment.region.raw.Rda", sep=""))
@@ -352,6 +354,7 @@ quartile.raw <- dget(paste(data.path,"quartile.raw.Rda", sep=""))
 statescore.raw <- dget(paste(data.path,"statescore.raw.Rda", sep=""))
 demographics.raw <- dget(paste(data.path,"demographics.raw.Rda", sep=""))
 footnotes.raw <- dget(paste(data.path,"footnotes.raw.Rda", sep=""))
+footnotes.region.raw <- dget(paste(data.path,"footnotes.region.raw.Rda", sep=""))
 staterating.raw <- dget(paste(data.path,"staterating.raw.Rda", sep=""))
 attainment.region.raw <- dget(paste(data.path,"attainment.region.raw.Rda", sep=""))
 assessment.region.raw <- dget(paste(data.path,"assessment.region.raw.Rda", sep=""))
@@ -364,6 +367,7 @@ school.mod <- school.raw
 school.mod$graph_name <- gsub(":","",school.mod$Display_Name)
 school.mod$graph_name <- gsub(",","",school.mod$graph_name)
 school.mod$graph_name <- gsub(" ","_",school.mod$graph_name)
+school.mod$graph_name <- gsub("&", "and",school.mod$graph_name)
 #format mailing address
 school.mod$address <- paste(school.mod$Address_1," ", school.mod$Address_2," ", school.mod$City,", ", school.mod$State," ", as.character(school.mod$Zipcode), sep="")
 school.mod$grade_range <- paste(school.mod$Grade_From,"-",school.mod$Grade_Thru, sep="")
@@ -412,6 +416,7 @@ retention.mod <- retention.raw
 #I update the SQL view to calculate this stuff, so I probably don't need to do any categorization
 retention.mod <- subset(retention.mod, select=-c(Teacher_ID, Teaching_Start_Date, Teaching_End_Date, Went_Id))
 retention.mod <- aggregate(x = retention.mod[, 2:4], by = list(Site_ID = retention.mod$Site_ID), FUN = sum)
+retention.mod$Retained_KIPP <- (retention.mod$Retained_School + retention.mod$Retained_KIPP)
 retention.mod <- reshape(retention.mod,
                   varying = c("Retained_School", "Retained_KIPP"),
                   v.names = "count",
@@ -428,6 +433,7 @@ retention.mod$print <- paste(retention.mod$percent, "%", sep="")
 
 ############################################format footnotes if needed###############################
 footnotes.mod <- footnotes.raw
+footnotes.region.mod <- footnotes.region.raw
 
 ############################################formate state rating data################################
 staterating.mod <- staterating.raw
@@ -439,6 +445,8 @@ attainment.region.mod <- attainment.region.raw
 assessment.region.mod <-assessment.region.raw
 assessment.school.mod <- assessment.school.raw
 
+#remove data for NOLA
+attainment.region.mod <- attainment.region.mod[attainment.region.mod$Region_ID != 10,]
 #separate single sites for attainment
 attainment.region.mod$level <- ifelse(attainment.region.mod$Region_ID > 1000,  1,  2)
 attainment.region.mod$Region_ID <- ifelse(attainment.region.mod$level == 1, attainment.region.mod$Region_ID / 100, attainment.region.mod$Region_ID)
@@ -464,8 +472,10 @@ assessment.region.mod$sat_pct <- (round((assessment.region.mod$N_SAT / assessmen
 assessment.region.mod$sat_pct <- paste(assessment.region.mod$sat_pct, "%", sep="")
 assessment.region.mod$sat_count <- paste(assessment.region.mod$N_SAT, "/", assessment.region.mod$N_Students, sep="")
 #format AP passing rate
-assessment.region.mod$ap_print <- (assessment.region.mod$Passing_AP * 100)
-assessment.region.mod$ap_print <- paste(assessment.region.mod$ap_print, "%", sep="")
+assessment.region.mod$ap_print1 <- (assessment.region.mod$Passing_AP * 100)
+assessment.region.mod$ap_print1 <- paste(assessment.region.mod$ap_print1, "%", sep="")
+assessment.region.mod$ap_print2 <- (assessment.region.mod$Passing_AP_2 * 100)
+assessment.region.mod$ap_print2 <- paste(assessment.region.mod$ap_print2, "%", sep="")
 assessment.region.mod$ap_count <- paste(assessment.region.mod$N_AP, "/", assessment.region.mod$N_Students, sep="")
 
 #school assessment
@@ -479,8 +489,10 @@ assessment.school.mod$sat_pct <- (round((assessment.school.mod$N_SAT / assessmen
 assessment.school.mod$sat_pct <- paste(assessment.school.mod$sat_pct, "%", sep="")
 assessment.school.mod$sat_count <- paste(assessment.school.mod$N_SAT, "/", assessment.school.mod$N_Students, sep="")
 #format AP passing rate
-assessment.school.mod$ap_print <- (assessment.school.mod$Passing_AP * 100)
-assessment.school.mod$ap_print <- paste(assessment.school.mod$ap_print, "%", sep="")
+assessment.school.mod$ap_print1 <- (assessment.school.mod$Passing_AP * 100)
+assessment.school.mod$ap_print1 <- paste(assessment.school.mod$ap_print1, "%", sep="")
+assessment.school.mod$ap_print2 <- (assessment.school.mod$Passing_AP_2 * 100)
+assessment.school.mod$ap_print2 <- paste(assessment.school.mod$ap_print2, "%", sep="")
 assessment.school.mod$ap_count <- paste(assessment.school.mod$N_AP, "/", assessment.school.mod$N_Students, sep="")
 
 ############################################format growth data#######################################
@@ -575,38 +587,44 @@ statescore.mod$Subtest_Name <- gsub("[[:space:]]*$","", statescore.mod$Subtest_N
 #save integer grade
 statescore.mod$grade_int <- statescore.mod$Grade
 #rename grade to sub if applicable
-statescore.mod$Grade <- as.character(statescore.mod$Grade)
-statescore.mod$Grade[statescore.mod$Grade=="99" & statescore.mod$Site_Level==2] <- "EOC"
+statescore.mod$grade_label <- as.character(statescore.mod$Grade)
+statescore.mod$grade_label[statescore.mod$grade_label=="99" & statescore.mod$Site_Level==2] <- "EOC"
  #footnote.1 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 1,]
-statescore.mod$Grade[statescore.mod$Grade=="99" & statescore.mod$Site_Level==1] <- statescore.mod$Subtest_Name[statescore.mod$Grade=="99"]
+statescore.mod$grade_label[statescore.mod$grade_label=="99" & statescore.mod$Site_Level==1] <- statescore.mod$Subtest_Name[statescore.mod$grade_label=="99"]
 #fix labeling for CA schools
-statescore.mod$Grade[statescore.mod$Site_ID ==58 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 58 & statescore.mod$Site_Level==1], statescore.mod$Grade[statescore.mod$Site_ID == 58 & statescore.mod$Site_Level==1], sep = " ")
-statescore.mod$Grade[statescore.mod$Site_ID ==73 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 73 & statescore.mod$Site_Level==1], statescore.mod$Grade[statescore.mod$Site_ID == 73 & statescore.mod$Site_Level==1], sep = " ")
-statescore.mod$Grade[statescore.mod$Site_ID ==37 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 37 & statescore.mod$Site_Level==1], statescore.mod$Grade[statescore.mod$Site_ID == 37 & statescore.mod$Site_Level==1], sep = " ")
-#fix facet ordering
-statescore.mod$Grade <- factor(statescore.mod$Grade)
-reorder(levels(statescore.mod$Grade), c(8,9,10,1,2,3,4,5,6,7,11,12,13,15,16,14,17,18,19,20,21,22,28,29,23,24,25,26,27,30,31,32,33,34,35,37,36,38,39,40,41,43,42,44,45,46,47,48))
-#statescore.mod$grade_order <- factor(statescore.mod$Grade, levels=c(reorder(levels(statescore.mod$Grade), c(8,9,10,1,2,3,4,5,6,7,11,12,13,15,16,14,17,18,19,20,21,22,28,29,23,24,25,26,27,30,31,32,33,34,35,37,36,38,39,40,41,43,42,44,45,46,47,48))))
+statescore.mod$grade_label[statescore.mod$Site_ID ==58 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 58 & statescore.mod$Site_Level==1], statescore.mod$grade_label[statescore.mod$Site_ID == 58 & statescore.mod$Site_Level==1], sep = " ")
+statescore.mod$grade_label[statescore.mod$Site_ID ==73 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 73 & statescore.mod$Site_Level==1], statescore.mod$grade_label[statescore.mod$Site_ID == 73 & statescore.mod$Site_Level==1], sep = " ")
+statescore.mod$grade_label[statescore.mod$Site_ID ==37 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 37 & statescore.mod$Site_Level==1], statescore.mod$grade_label[statescore.mod$Site_ID == 37 & statescore.mod$Site_Level==1], sep = " ")
+
+#reorder(levels(statescore.mod$grade_label), c(8,9,10,1,2,3,4,5,6,7,11,12,13,15,16,14,17,18,19,20,21,22,28,29,23,24,25,26,27,30,31,32,33,34,35,37,36,38,39,40,41,43,42,44,45,46,47,48))
+#statescore.mod$grade_label_order <- factor(statescore.mod$grade_label, levels=c(reorder(levels(statescore.mod$grade_label), c(8,9,10,1,2,3,4,5,6,7,11,12,13,15,16,14,17,18,19,20,21,22,28,29,23,24,25,26,27,30,31,32,33,34,35,37,36,38,39,40,41,43,42,44,45,46,47,48))))
 
 
 
 #truncate long names >_<
-statescore.mod$Grade <- gsub("English Language Arts", "ELA", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("Literature & Composition", "Lit. & Comp.", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("Global History & Geography", "Global Hist. & Geog.", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("Comprehensive English", "Comp. Eng.", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("Living Environment", "Living Env.", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("English I Reading", "Eng I Read.", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("English II Reading", "Eng II Read", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("English III Reading", "Eng III Read.", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("English I Writing", "Eng I Write", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("English II Writing", "Eng II Write", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("English III Writing", "Eng III Write", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("World History", "W. Hist.", statescore.mod$Grade)
-statescore.mod$Grade <- gsub("World Geography", "W. Geog.", statescore.mod$Grade)
+statescore.mod$grade_label <- gsub("English Language Arts", "ELA", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("Literature & Composition", "Lit. & Comp.", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("Global History & Geography", "Global Hist. & Geog.", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("Comprehensive English", "Comp. Eng.", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("Living Environment", "Living Env.", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("English I Reading", "Eng I Read.", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("English II Reading", "Eng II Read", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("English III Reading", "Eng III Read.", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("English I Writing", "Eng I Write", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("English II Writing", "Eng II Write", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("English III Writing", "Eng III Write", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("World History", "W. Hist.", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("World Geography", "W. Geog.", statescore.mod$grade_label)
 
-#fix Texas labeling
-
+#fix facet ordering
+statescore.mod$grade_label <- factor(statescore.mod$grade_label)
+order.value <- levels(statescore.mod$grade_label)
+order.value <- as.data.frame(order.value)
+order.lookup <- c(8,9,0,1,2,3,4,5,6,7,11,12,13,15,16,14,17,18,19,20,21,22,28,29,23,24,25,26,27,30,31,32,33,34,35,37,36,38,39,40,41,43,42,44,45,46,47,48)
+order.lookup <- as.data.frame(order.lookup)
+statescore.order <- cbind(order.value, order.lookup)
+statescore.order$order.value <- as.character(statescore.order$order.value)
+statescore.order$order.lookup <- as.integer(statescore.order$order.lookup)
 
 #round floating point scores
 statescore.mod$score <- round(statescore.mod$score, 0)
@@ -614,7 +632,7 @@ statescore.mod$score <- round(statescore.mod$score, 0)
 #WHY IS SORTING THIS HARD.
 statescore.mod <- subset(statescore.mod, select=-c(id))
 attach(statescore.mod)
-statescore.mod <- statescore.mod[order(Site_Level,State_ID,Site_ID,Grade,Subtest_Cat_RC_ID,order),] 
+statescore.mod <- statescore.mod[order(Site_Level,State_ID,Site_ID,grade_label,Subtest_Cat_RC_ID,order),] 
 detach(statescore.mod)
 
 ################################################format demographic data#################################################
@@ -661,6 +679,7 @@ dput(quartile.mod, paste(data.path, "quartile.mod.Rda", sep=""))
 dput(statescore.mod, paste(data.path,"statescore.mod.Rda", sep =""))
 dput(demographics.mod, paste(data.path,"demographics.mod.Rda", sep=""))
 dput(footnotes.mod, paste(data.path,"footnotes.mod.Rda", sep=""))
+dput(footnotes.region.mod, paste(data.path,"footnotes.region.mod.Rda", sep=""))
 dput(staterating.mod, paste(data.path,"staterating.mod.Rda", sep=""))
 dput(attainment.region.mod, paste(data.path,"attainment.region.mod.Rda", sep=""))
 dput(assessment.region.mod, paste(data.path,"assessment.region.mod.Rda", sep=""))
@@ -688,6 +707,7 @@ quartile.mod <- dget(paste(data.path,"quartile.mod.Rda", sep=""))
 statescore.mod <- dget(paste(data.path,"statescore.mod.Rda", sep=""))
 demographics.mod <- dget(paste(data.path,"demographics.mod.Rda", sep=""))
 footnotes.mod <- dget(paste(data.path,"footnotes.mod.Rda", sep=""))
+footnotes.region.mod <- dget(paste(data.path,"footnotes.region.mod.Rda", sep=""))
 staterating.mod <- dget(paste(data.path,"staterating.mod.Rda", sep=""))
 attainment.region.mod <- dget(paste(data.path,"attainment.region.mod.Rda", sep=""))
 assessment.region.mod <- dget(paste(data.path,"assessment.region.mod.Rda", sep=""))
@@ -699,17 +719,17 @@ statescore.palette <- c("#BED75A", "#6EB441", "#E6D2C8", "#C3B4A5", "#E6E6E6", "
 race.palette <- c("#2479F2", "#004CD2", "#A8D9FF", "#82FFFF", "#D2D2D2")
 pie.palette <- c("#D2D2D2", "#2479F2")
 
-for(level in c(1)){
+for(level in c(2)){
 
 
 if(level == 1){
 #x <- school.mod$Site_ID
-#x <- c(58, 73, 37, 19, 5, 46, 98, 36, 66, 87)
-x <- c(46)
+#x <- c(24)
+x <- c(63)
 }
 else if(level == 2){
-#x <- region.mod$Site_ID
-x <- c(18)
+x <- region.mod$Site_ID
+#x <- c(4)
 }
 
 for(s in x){
@@ -757,7 +777,8 @@ for(s in x){
   sat_count <-hs_scores$sat_count
   act_score <- hs_scores$AVG_ACT
   act_count <- hs_scores$act_count
-  ap_score <- hs_scores$ap_print
+  ap_score1 <- hs_scores$ap_print1
+  ap_score2 <- hs_scores$ap_print2
   ap_count <- hs_scores$ap_count
   attainment <- attainment.region.mod[attainment.region.mod$Region_ID == s & attainment.region.mod$level==1,]
   grad_print <- attainment$grad_print
@@ -793,7 +814,8 @@ for(s in x){
   sat_count <-hs_scores$sat_count
   act_score <- hs_scores$AVG_ACT
   act_count <- hs_scores$act_count
-  ap_score <- hs_scores$ap_print
+  ap_score1 <- hs_scores$ap_print1
+  ap_score2 <- hs_scores$ap_print2
   ap_count <- hs_scores$ap_count
   attainment <- attainment.region.mod[attainment.region.mod$Region_ID == s & attainment.region.mod$level==2,]
   grad_print <- attainment$grad_print
@@ -881,6 +903,7 @@ quartile.plot <- quartile.plot + scale_fill_manual(values = quartile.palette,
                                                               "Percent Below 25 NPR"))
 quartile.plot <- quartile.plot + facet_grid(~ Sub_Test_Name)
 quartile.plot <- quartile.plot + xlab('Season')
+quartile.plot <- quartile.plot + geom_hline(yintercept=0)
 quartile.plot <- quartile.plot + theme(axis.title.x = element_text(size = rel(1.8)),
                                        axis.ticks.x = element_blank(),
                                        axis.text.x = element_text(size = rel(1.8), angle=30, color = "#333333"), 
@@ -909,14 +932,14 @@ quartile.plot <- quartile.plot + guides(fill = guide_legend(nrow = 2))
 
 statescore.graph <- subset(statescore.mod, (Site_ID == s) & (Site_Level == level))
 if(level==1){
-statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, detail_pos = (((cumsum(score)) - 0.5*score)))
-statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, label = sum(score))
-statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Name, score_level), transform, pos = (cumsum(score) + 15))
+statescore.graph <- ddply(statescore.graph, .(grade_label, Subtest_Name, score_level), transform, detail_pos = (((cumsum(score)) - 0.5*score)))
+statescore.graph <- ddply(statescore.graph, .(grade_label, Subtest_Name, score_level), transform, label = sum(score))
+statescore.graph <- ddply(statescore.graph, .(grade_label, Subtest_Name, score_level), transform, pos = (cumsum(score) + 15))
 }
 else if(level==2){
-statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_level), transform, detail_pos = (((cumsum(score)) - 0.5*score)))
-statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_level), transform, label = sum(score))
-statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_level), transform, pos = (cumsum(score) + 15))
+statescore.graph <- ddply(statescore.graph, .(grade_label, Subtest_Cat_RC_ID, score_level), transform, detail_pos = (((cumsum(score)) - 0.5*score)))
+statescore.graph <- ddply(statescore.graph, .(grade_label, Subtest_Cat_RC_ID, score_level), transform, label = sum(score))
+statescore.graph <- ddply(statescore.graph, .(grade_label, Subtest_Cat_RC_ID, score_level), transform, pos = (cumsum(score) + 15))
 }
 
 #statescore.graph$score_stack <- factor(statescore.graph$score_stack)
@@ -925,13 +948,21 @@ statescore.graph <- ddply(statescore.graph, .(Grade, Subtest_Cat_RC_ID, score_le
  sublist <- unique(unlist(statescore.graph$Subtest_Cat_RC_ID, use.names = FALSE))
 #This loop creates a plot for each CRT umbrella category.
 for (sub in sublist){
-                      statescore.graph.loop <- assign(paste("statescore.graph.", sub, sep = ""),subset(statescore.graph, Subtest_Cat_RC_ID == sub))
+                      statescore.graph.loop <- subset(statescore.graph, Subtest_Cat_RC_ID == sub)
+                      statescore.graph.loop$grade_label <- as.character(statescore.graph.loop$grade_label)
 
-                      #gradeOrdered <- c(unique(statescore.graph.loop$grade_int))
+                      statescore.order.loop <- subset(statescore.order, order.value %in% unique(statescore.graph.loop$grade_label))
+                      #statescore.graph.loop$grade_label <- factor(statescore.graph.loop$grade_label)
+                      statescore.order.loop$list <- rank(statescore.order.loop$order.lookup)
+                      statescore.order.loop <- arrange(statescore.order.loop,list)
+                      levels <- as.vector(statescore.order.loop$order.value)
+                      statescore.graph.loop$grade_label <- factor(statescore.graph.loop$grade_label, levels=levels)
+                      assign(paste("statescore.graph.", sub, sep = ""), statescore.graph.loop)
+                      #grade_labelOrdered <- c(unique(statescore.graph.loop$grade_label_int))
 
-                      #statescore.graph.loop[with(statescore.graph.loop, order(Grade, as.integer(factor(grade_int, gradeOrdered)))), ]
+                      #statescore.graph.loop[with(statescore.graph.loop, order(grade_label, as.integer(factor(grade_label_int, grade_labelOrdered)))), ]
 
-                      #statescore.graph.loop$Grade = reorder(statescore.graph.loop$grade_int)
+                      #statescore.graph.loop$grade_label = reorder(statescore.graph.loop$grade_label_int)
 
                       statescore.graph.loop$label <- ifelse(statescore.graph.loop$Score_Grouping_Cat_ID == 2, "", statescore.graph.loop$label)
 
@@ -951,8 +982,8 @@ for (sub in sublist){
                       statescore.plot <- statescore.plot + geom_bar(stat="identity", width=1, order=order)
                       statescore.plot <- statescore.plot + scale_fill_manual(values = statescore.palette, breaks = c(unique(statescore.graph.loop$order)), labels = c(unique(statescore.graph.loop$score_stack)))
                       #if(statescore.graph.loop$State_ID=='CA'){
-                      #statescore.plot <- statescore.plot + facet_grid(grade_int ~ Grade, labeller = label_wrap(width=15))
-                      statescore.plot <- statescore.plot + facet_grid(~ Grade, labeller = label_wrap(width=12))
+                      #statescore.plot <- statescore.plot + facet_grid(grade_label_int ~ grade_label, labeller = label_wrap(width=15))
+                      statescore.plot <- statescore.plot + facet_grid(. ~ grade_label, labeller = label_wrap(width=13))
                       statescore.plot <- statescore.plot + coord_equal(ratio = 0.07)
                       statescore.plot <- statescore.plot + scale_y_continuous(limits = c(0, 120))
                       #statescore.plot <- statescore.plot + coord_fixed(ratio = 0.05)
@@ -979,12 +1010,14 @@ for (sub in sublist){
                                                                  panel.margin = unit(0.75, "cm"),
                                                                  panel.grid.major = element_blank(), 
                                                                  panel.grid.minor = element_blank())
-                      statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 4.8)
+                      statescore.plot <- statescore.plot + geom_text(aes(label = label, y = pos), size = 4.8, fontface = 'bold.italic')
                       statescore.plot <- statescore.plot + geom_text(aes(label = score, y = detail_pos), size = 4.1)
                       statescore.plot <- statescore.plot + guides(fill = guide_legend(nrow = 2))  
 
                       assign(paste("statescore.plot.", sub, sep = ""), statescore.plot)
                       rm(statescore.graph.loop)
+                      rm(statescore.order.loop)
+                      rm(levels)
                     }
 
 #####################################Subset Demographics#############################################
@@ -1166,7 +1199,7 @@ knit("C:/Users/mhilton/Documents/GitHub/Report_Generator/HTML/school_template.Rh
 file.rename(from="C:/Users/mhilton/Documents/GitHub/Report_Generator/R/school_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
 
 }else if(level==2){
-knit("region_template.Rhtml")
+knit("C:/Users/mhilton/Documents/GitHub/Report_Generator/HTML/region_template.Rhtml")
 #hatersgonnahate.jpg
 file.rename(from="C:/Users/mhilton/Documents/GitHub/Report_Generator/R/region_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
 }
@@ -1184,12 +1217,14 @@ if(!exists("grad_print")) {cat()} else {rm(grad_print)}
 if(!exists("grad_count")) {cat()} else {rm(grad_count)}
 if(!exists("matric_print")) {cat()} else {rm(matric_print)}
 if(!exists("matric_count")) {cat()} else {rm(matric_count)}
-if(!exists("act_pct")) {cat()} else {rm(matric_count)}
-if(!exists("act_count")) {cat()} else {rm(matric_count)}
-if(!exists("sat_pct")) {cat()} else {rm(matric_count)}
-if(!exists("sat_count")) {cat()} else {rm(matric_count)}
-if(!exists("ap_pct")) {cat()} else {rm(matric_count)}
-if(!exists("ap_count")) {cat()} else {rm(matric_count)}
+if(!exists("act_pct")) {cat()} else {rm(act_pct)}
+if(!exists("act_count")) {cat()} else {rm(act_count)}
+if(!exists("sat_pct")) {cat()} else {rm(sat_pct)}
+if(!exists("sat_count")) {cat()} else {rm(sat_count)}
+if(!exists("ap_pct1")) {cat()} else {rm(ap_pct1)}
+if(!exists("ap_count1")) {cat()} else {rm(ap_count1)}
+if(!exists("ap_pct2")) {cat()} else {rm(ap_pct2)}
+if(!exists("ap_count2")) {cat()} else {rm(ap_count2)}
 
 ######################################Convert HTML to PDF#############################################
 #set I/O variables

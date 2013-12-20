@@ -43,7 +43,6 @@ end.rcode-->
 <div align= "center">
 <p>This is a summary of all <strong>School Level</strong> data the Foundation plans on including in the 2013 KIPP Annual Report Card. Please verify that all data is accurate as of <strong>November, 2013</strong>, and obtain <strong>School Leader sign-off</strong> for it's inclusion in the report card. If you have any questions, please contact Mike Hilton at <a href="mailto:mhilton@kipp.org">mhilton@kipp.org</a>.<br />
 <br />
-<br />
 </p>
 </div>
 <div class="leader", align = "center">
@@ -120,41 +119,41 @@ end.rcode-->
 <div class="two-col-container", align="center">
 <div class="two-col-left", align="center">
 <!--begin.rcode graduation, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(length(grad_print)==0) {cat()} else{cat("<h2>HS Graduation</h2>", "<h3><strong>", grad_print, "</strong></h3>", "<p>(",grad_count, " students)</p>", sep="")}
+if(length(grad_print)==0) {cat()} else{cat("<h2>HS Graduation</h2>", "<h3><strong>", grad_print, "</strong></h3>", "<p>(",grad_count, " 8th grade completers, 5+ years out)</p>", sep="")}
 end.rcode-->
 </div>
 <div class="two-col-right", align= "center">
 <!--begin.rcode matriculation, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(length(matric_print)==0) {cat()} else{cat("<h2>College Matriculation</h2>", "<h3><strong>", matric_print, "</strong></h3>", "<p>(",matric_count, " students)</p>", sep="")}
+if(length(matric_print)==0) {cat()} else{cat("<h2>College Matriculation</h2>", "<h3><strong>", matric_print, "</strong></h3>", "<p>(",matric_count, " 8th grade completers, 5+ years out)</p>", sep="")}
 end.rcode-->
 </div>
 </div>
 <div class="spacer" style="clear: both;"></div>
 <div class="header", align= "center">
 <!--begin.rcode assessment.header, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(t == 'H') {cat("<h1>HS Assessment</h1>")} else{cat()}
+if(t == 'H' & (length(ap_count)!=0 | length(act_count)!=0 | length(sat_count)!=0)) {cat("<h1>HS Assessment</h1>")} else{cat()}
 end.rcode-->
 </div>
 <div class="three-col-container">
 <div class="three-col-left">
 <!--begin.rcode act, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if( t !='H' & length(act_score)==0) {cat()} else{cat("<h2>Avg. ACT</h2>", "<h3><strong>", act_score, "</strong>", " <p>(",act_count, " graduating seniors)</p>", sep="")}
+if( t !='H' | length(act_count)==0) {cat()} else{cat("<h2>Avg. ACT</h2>", "<h3><strong>", act_score, "</strong>", " <p>(",act_count, " graduating seniors tested)</p>", sep="")}
 end.rcode-->
 </div>
 <div class="three-col-center">
 <!--begin.rcode sat, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if( t!='H' & length(sat_score)==0) {cat()} else{cat("<h2>Avg. SAT</h2>", "<h3><strong>", sat_score, "</strong>", " <p>(",sat_count, " graduating seniors)</p>", sep="")}
+if( t!='H' | length(sat_count)==0) {cat()} else{cat("<h2>Avg. SAT</h2>", "<h3><strong>", sat_score, "</strong>", " <p>(",sat_count, " graduating seniors tested)</p>", sep="")}
 end.rcode-->
 </div>
 <div class= "three-col-right">
 <!--begin.rcode ap, out.width = 5, out.height = 3, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(t!='H' & length(ap_score)==0) {cat()} else{cat("<h2>AP (% 3+)</h2>", "<h3><strong>", ap_score, "</strong>", " <p>(",ap_count, " graduating seniors)</p>", sep="")}
+if(t!='H' | length(ap_count)==0) {cat()} else{cat("<h2>AP (% 3+)</h4>", "<h4><strong>", ap_score1, "</strong>"," (one or more)" , "<br />", "<strong>", ap_score2, "</strong>"," (two or more)" ,"</h4>", " <p>(",ap_count, " graduating seniors taking at least 1 AP)</p>", sep="")}
 end.rcode-->
 </div>
 </div>
 <div class="clear"></div>
 <div class="header-break", align= "center">
-<h1>State Assessment Results</h1>
+<h1>State Assessment Results</h1
 </div>
 <div align="center">
   <!--begin.rcode state.rating, warning-FALSE, message=FALSE, echo=FALSE, results='asis'
@@ -164,7 +163,7 @@ end.rcode-->
 </div>
 <div align= "center">
 <!--begin.rcode statescore.label, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
-if(nrow(statescore.graph) == 0){cat("<p>No grades were tested for the 2012-13 Academic Year</p>")}
+if(nrow(statescore.graph) == 0){cat("<p>No grades were tested for the 2012-13 Academic Year, or scores are not yet released.</p>")}
 end.rcode-->
 <!--begin.rcode statescore.graph.1, fig.width=10, fig.height=6.25, fig.align='center', out.width=650, out.height=300, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {cat("<h2>Reading</h2>")
@@ -218,8 +217,10 @@ end.rcode-->
 <!--begin.rcode quartile.graph, fig.width=13, fig.height=12, fig.align='center', out.width=800, out.height=640, warning=FALSE, message=FALSE, echo=FALSE, results='asis'
 if(nrow(quartile.graph) > 0) {cat("<h2>Quartile Distribution</h2>")
 							  plot(quartile.plot)
-							  } else {cat("<h2>Quartile Distribution</h2>")
-							  		  cat("No grades were tested for the 2012-13 Academic Year")
+							  } else if(t=='H') {cat("<h2>Quartile Distribution</h2>")
+							  		  cat("No MAP data will be reported for high school grades.")
+							  		  	 }else {cat("<h2>Quartile Distribution</h2>")
+							  		  		cat("No grades were tested for the 2012-13 Academic Year")
 							  		  }
 end.rcode-->
 </div>

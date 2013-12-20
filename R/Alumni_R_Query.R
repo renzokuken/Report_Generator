@@ -479,7 +479,7 @@ SELECT Region_ID
 FROM  #tt_Attain_Update
 WHERE Row_Count = 1
 AND Alumni_Type = '8th Grade Completer'
-AND KIPP_HS_Class__c <= 2013
+AND KIPP_HS_Class__c <= 2012
 AND Region_ID IS NOT NULL
 
 GROUP BY Region_ID
@@ -519,7 +519,7 @@ SELECT Id
 	,Adv_Degree_Name
 INTO #tt_High_School_RC
 FROM #tt_Attain_Update
-WHERE (KIPP_HS_Class__c = 2013 OR YEAR(HS_Grad_Date) = 2013)
+WHERE (YEAR(HS_Grad_Date) = 2013)
 AND KIPP_HS = 1
 AND HS_GRAD = 1
 
@@ -546,6 +546,7 @@ SELECT Id
       ,ACT_Composite__c
       ,AP__c
       ,ACT_Writing__c
+      ,RecordTypeId
   INTO #tt_HS_Assessment
   FROM Attainment.dbo.Standardized_Test__c
   WHERE IsDeleted = 0
@@ -569,7 +570,7 @@ SELECT Contact__c
 INTO #tt_SAT
 FROM #tt_HS_Assessment
 WHERE Overall_Score__c IS NOT NULL
-AND Overall_Score__c <> ACT_Composite__c --This is stupid.
+AND RecordTypeId = '01280000000BQ2ZAAW'
 GROUP BY Contact__c
 ")
 
@@ -580,19 +581,32 @@ SELECT Contact__c
 	,MAX(ACT_Composite__c) AS ACT_Score
 INTO #tt_ACT
 FROM #tt_HS_Assessment
-WHERE ACT_Composite__c IS NOT NULL
+WHERE ACT_Composite__c IS NOT NULL  AND ACT_Composite__c <> 0
+AND RecordTypeId = '01280000000BQ2UAAW'
 GROUP BY Contact__c
 ")
 
 agg17 <- ("
 --AP
 SELECT Contact__c
-	,COUNT(AP__c) AS N_Test
-	,MAX(AP__c) AS Highest_AP
-	,CASE WHEN MAX(AP__c) >= 3 THEN 1 ELSE 0 END AS Passing_AP
-INTO #tt_AP
+	,AP__c
+	,CASE WHEN AP__c >= 3 THEN 1 ELSE 0 END AS Passing_AP
+INTO #tt_AP_stage
 FROM #tt_HS_Assessment
 WHERE AP__c IS NOT NULL
+AND RecordTypeId = '01280000000LonYAAS'
+GROUP BY Contact__c
+,AP__c
+")
+
+agg18 <- ("SELECT 
+	 Contact__c
+	,COUNT(AP__c) AS N_Test
+	,MAX(AP__c) AS Highest_AP
+	,CASE WHEN SUM(Passing_AP) >= 1 THEN 1 ELSE 0 END AS Passing_AP
+	,CASE WHEN SUM(Passing_AP) >= 2 THEN 1 ELSE 0 END AS Passing_AP_2
+INTO #tt_AP
+FROM #tt_AP_stage
 GROUP BY Contact__c
 
 --SELECT * FROM #tt_SAT S
@@ -609,7 +623,7 @@ GROUP BY Contact__c
 --WHERE H.Region_ID = 11
 ")
 
-agg18 <- ("
+agg19 <- ("
 /**********Link scores to students*************/
 	 
 SELECT Id
@@ -645,6 +659,7 @@ SELECT Id
 	,CASE WHEN A.ACT_Score = 0 THEN NULL ELSE A.ACT_Score END AS ACT_Score
 	,P.Highest_AP
 	,P.Passing_AP
+	,P.Passing_AP_2
 INTO #tt_Score_Join
 FROM #tt_High_School_RC H
 LEFT JOIN #tt_SAT S
@@ -669,8 +684,9 @@ SELECT Region_ID
 	,AVG(ACT_Score) AS AVG_ACT
 	,COUNT(Highest_AP) AS N_AP
 	,CAST(SUM(Passing_AP) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP
+	,CAST(SUM(Passing_AP_2) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP_2
 FROM #tt_Score_Join
-WHERE Region_ID <> 15
+WHERE Region_ID <> 15 AND Region_ID <> 10
 GROUP BY Region_ID
 		,Region_Name
 ORDER BY Region_ID
@@ -686,10 +702,11 @@ SELECT School_ID
 	,AVG(ACT_Score) AS AVG_ACT
 	,COUNT(Highest_AP) AS N_AP
 	,CAST(SUM(Passing_AP) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP
+	,CAST(SUM(Passing_AP_2) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP_2
 FROM #tt_Score_Join S
 JOIN #tt_HS_Lookup H
 ON S.HS_Name = H.School_Name
-WHERE School_ID <> 104
+WHERE School_ID <> 104 AND School_ID <> 118
 GROUP BY School_ID
 		,School_Name
 ORDER BY School_ID
@@ -750,9 +767,12 @@ drop18 <- ("
 DROP TABLE #tt_ACT
 ")
 drop19 <- ("
-DROP TABLE #tt_AP
+DROP TABLE #tt_AP_stage
 ")
 drop20 <- ("
+DROP TABLE #tt_AP
+")
+drop21 <- ("
 DROP TABLE #tt_Score_Join
 ")
 
@@ -779,6 +799,7 @@ sqlQuery(as, agg15)
 sqlQuery(as, agg16)
 sqlQuery(as, agg17)
 sqlQuery(as, agg18)
+sqlQuery(as, agg19)
 assessment.region.raw <- sqlQuery(as, hs.assessment1, stringsAsFactors = FALSE)
 assessment.school.raw <- sqlQuery(as, hs.assessment2, stringsAsFactors = FALSE)
 sqlQuery(as, drop1)
@@ -801,3 +822,4 @@ sqlQuery(as, drop17)
 sqlQuery(as, drop18)
 sqlQuery(as, drop19)
 sqlQuery(as, drop20)
+sqlQuery(as, drop21)
