@@ -1,7 +1,7 @@
 ###########################################################################################################
 #Project FORGE: Fast and Optimized R-based Generator of Excellence                                        #
 #Written By: Mike Hilton                                                                                  #
-#Last Updated: 12-20-13                                                                                   #
+#Last Updated: 2-7-14                                                                                     #
 ###########################################################################################################
 rm(list=ls())
 
@@ -14,10 +14,15 @@ pulldata <- 1
 
 formatdata <- 1
 
+publishdata <- 1
+
 publishdata_html <- 1
+
+publishdata_graph <- 0
 
 data.path <<- paste("C:/Users/mhilton/Documents/R_Data/HTML_Reports/")
 report.path <<- paste("C:/Users/mhilton/Documents/R_Graphs/HTML_Reports/")
+graph.path <<- paste("Z:/001_NEW_SNEETCH/Report_Card/2013/Output/Print/")
 #data.path <<- paste("Z:/001_NEW_SNEETCH/Report_Card/2013/Data/")
 #report.path <<- paste("Z:/001_NEW_SNEETCH/Report_Card/2013/Output/")
 
@@ -30,6 +35,7 @@ library(plyr)
 library(knitr)
 library(xtable)
 library(markdown)
+library(Cairo)
 
 while(pulldata == 1) {
   
@@ -101,7 +107,7 @@ region.query <- ("SELECT
              LEFT JOIN Clusters.dbo.Regional_Leader RL 
              ON XRL.Regional_Leader_ID = RL.Regional_Leader_ID
              WHERE Inactive = 0
-             AND Academic_Year_Opened < 2014
+             AND Academic_Year_Opened < 2015
              AND (date_ended IS NULL
              OR C.Cluster_ID = 16)
              ORDER BY Site_ID
@@ -368,6 +374,9 @@ school.mod$graph_name <- gsub(":","",school.mod$Display_Name)
 school.mod$graph_name <- gsub(",","",school.mod$graph_name)
 school.mod$graph_name <- gsub(" ","_",school.mod$graph_name)
 school.mod$graph_name <- gsub("&", "and",school.mod$graph_name)
+#The file structure for the graphs uses a different naming convention. Ideally these would be merged, but in the meantime I'm using a dirty fix. D:
+school.mod$file_name <- gsub("_","",school.mod$graph_name)
+school.mod$file_name <- gsub("and", "and", school.mod$file_name)
 #format mailing address
 school.mod$address <- paste(school.mod$Address_1," ", school.mod$Address_2," ", school.mod$City,", ", school.mod$State," ", as.character(school.mod$Zipcode), sep="")
 school.mod$grade_range <- paste(school.mod$Grade_From,"-",school.mod$Grade_Thru, sep="")
@@ -378,9 +387,12 @@ region.mod <- region.raw
 region.mod$graph_name <- gsub(":","",region.mod$Region_Name)
 region.mod$graph_name <- gsub(",","",region.mod$graph_name)
 region.mod$graph_name <- gsub(" ","_",region.mod$graph_name)
+#The file structure for the graphs uses a different naming convention. Ideally these would be merged, but in the meantime I'm using a dirty fix. D:
+region.mod$file_name <- gsub("_","",region.mod$graph_name)
 #format mailing address
 region.mod$address <- paste(region.mod$Address_1," ",region.mod$Address_2," ", region.mod$City,", ", region.mod$State," ", as.character(region.mod$Zip), sep="")
 region.mod$leader_name <- paste(region.mod$first_name, " ", region.mod$last_name)
+
 
 ############################################format school leader data################################
 schoolleader.mod <- schoolleader.raw
@@ -389,6 +401,7 @@ schoolleader.mod$count <- sapply(1:length(schoolleader.mod$Site_ID), function(i)
 schoolleader.mod <- reshape(schoolleader.mod, timevar = "count", 
                                               idvar = c("Site_ID"), 
                                               direction = "wide")
+#Paste names for cases where School Leader count > 1.
 schoolleader.mod$leader_name <- paste(schoolleader.mod$leader_name.1, " & ", schoolleader.mod$leader_name.2, sep="")
 schoolleader.mod$leader_name <- gsub(" & NA","", schoolleader.mod$leader_name)
 
@@ -413,7 +426,7 @@ fte.region.mod$teachers <- round(fte.region.mod$teachers, 0)
 
 ############################################format retention data####################################
 retention.mod <- retention.raw
-#I update the SQL view to calculate this stuff, so I probably don't need to do any categorization
+#I updated the SQL view to calculate this stuff, so I probably don't need to do any categorization
 retention.mod <- subset(retention.mod, select=-c(Teacher_ID, Teaching_Start_Date, Teaching_End_Date, Went_Id))
 retention.mod <- aggregate(x = retention.mod[, 2:4], by = list(Site_ID = retention.mod$Site_ID), FUN = sum)
 retention.mod$Retained_KIPP <- (retention.mod$Retained_School + retention.mod$Retained_KIPP)
@@ -505,13 +518,13 @@ growth.region.mod$Percent_Met_Growth_Target <- paste(as.character(growth.region.
 ###########################################format quartile data######################################
 quartile.mod <- quartile.raw
 #hardcode TECH Valley's numbers
-quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",5,"Fall 5th (13)",20,60,20,0))
-quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",6,"Fall 6th (13)",13,32,38,17))
-quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",7,"Fall 7th (13)",17,38,35,10))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",5,"Fall 5th (13)",32,32,28,8))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",6,"Fall 6th (13)",27,27,34,12))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",7,"Fall 7th (13)",19,41,31,9))
 quartile.mod <- rbind(quartile.mod,list(46,1,"Mathematics","FALL2",8,"Fall 8th (13)",7,14,58,21))
-quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",5,"Fall 5th (13)",80,20,0,0))
-quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",6,"Fall 6th (13)",30,43,20,9))
-quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",7,"Fall 7th (13)",13,38,36,14))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",5,"Fall 5th (13)",28,24,33,15))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",6,"Fall 6th (13)",32,36,19,14))
+quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",7,"Fall 7th (13)",15,39,32,15))
 quartile.mod <- rbind(quartile.mod,list(46,1,"Reading","FALL2",8,"Fall 8th (13)",0,19,47,35))
 
 
@@ -541,7 +554,8 @@ quartile.mod$Sub_Test_Name <- factor(quartile.mod$Sub_Test_Name,
 #generate order for bar sequence
 quartile.mod$sequence <- paste(quartile.mod$Grade_When_Taken_int, quartile.mod$Season)
 
-#Create section labels with proper order.
+#reorders data frame so that bars stack in the correct sequence.
+#On a side note, WHY IS SORTING THIS HARD.
 quartile.mod <- subset(quartile.mod, select=-c(id))
 attach(quartile.mod)
 quartile.mod <- quartile.mod[order(Site_Level,Site_ID,Sub_Test_Name,sequence),] 
@@ -586,10 +600,10 @@ statescore.mod$order <- as.character(statescore.mod$order)
 statescore.mod$Subtest_Name <- gsub("[[:space:]]*$","", statescore.mod$Subtest_Name)
 #save integer grade
 statescore.mod$grade_int <- statescore.mod$Grade
-#rename grade to sub if applicable
+#rename grade to subject if applicable
 statescore.mod$grade_label <- as.character(statescore.mod$Grade)
 statescore.mod$grade_label[statescore.mod$grade_label=="99" & statescore.mod$Site_Level==2] <- "EOC"
- #footnote.1 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 1,]
+#footnote.1 <- footnotes.mod[footnotes.mod$School_ID== s & footnotes.mod$Footnote_Number == 1,]
 statescore.mod$grade_label[statescore.mod$grade_label=="99" & statescore.mod$Site_Level==1] <- statescore.mod$Subtest_Name[statescore.mod$grade_label=="99"]
 #fix labeling for CA schools
 statescore.mod$grade_label[statescore.mod$Site_ID ==58 & statescore.mod$Site_Level==1] <- paste(statescore.mod$Subtest_Name[statescore.mod$Site_ID == 58 & statescore.mod$Site_Level==1], statescore.mod$grade_label[statescore.mod$Site_ID == 58 & statescore.mod$Site_Level==1], sep = " ")
@@ -615,12 +629,14 @@ statescore.mod$grade_label <- gsub("English II Writing", "Eng II Write", statesc
 statescore.mod$grade_label <- gsub("English III Writing", "Eng III Write", statescore.mod$grade_label)
 statescore.mod$grade_label <- gsub("World History", "W. Hist.", statescore.mod$grade_label)
 statescore.mod$grade_label <- gsub("World Geography", "W. Geog.", statescore.mod$grade_label)
+statescore.mod$grade_label <- gsub("Summative High School Mathematics", "Sum. HS Math", statescore.mod$grade_label)
 
-#fix facet ordering
+#fix facet ordering. This will be inherited by the subsetted data during the graph function.
 statescore.mod$grade_label <- factor(statescore.mod$grade_label)
 order.value <- levels(statescore.mod$grade_label)
 order.value <- as.data.frame(order.value)
-order.lookup <- c(8,9,0,1,2,3,4,5,6,7,11,12,13,15,16,14,17,18,19,20,21,22,28,29,23,24,25,26,27,30,31,32,33,34,35,37,36,38,39,40,41,43,42,44,45,46,47,48)
+#for the love of god I need to find an algorithm that automates this crap.
+order.lookup <- c(8,9,0,1,2,3,4,5,6,7,11,12,13,14,16,17,15,18,19,20,21,22,23,29,30,24,25,26,27,28,31,32,33,34,35,36,38,37,39,40,41,42,43,44,45,47,46,48,49,50,51,52,53)
 order.lookup <- as.data.frame(order.lookup)
 statescore.order <- cbind(order.value, order.lookup)
 statescore.order$order.value <- as.character(statescore.order$order.value)
@@ -629,7 +645,8 @@ statescore.order$order.lookup <- as.integer(statescore.order$order.lookup)
 #round floating point scores
 statescore.mod$score <- round(statescore.mod$score, 0)
 
-#WHY IS SORTING THIS HARD.
+#reorders data frame so that bars stack in the correct sequence.
+#On a side note, WHY IS SORTING THIS HARD.
 statescore.mod <- subset(statescore.mod, select=-c(id))
 attach(statescore.mod)
 statescore.mod <- statescore.mod[order(Site_Level,State_ID,Site_ID,grade_label,Subtest_Cat_RC_ID,order),] 
@@ -690,7 +707,7 @@ break
 }
 
 #########################################Generate site-level HTML reports###################################
-while(publishdata_html == 1) {    
+while(publishdata == 1) {    
 
 #get data
 school.mod <- dget(paste(data.path,"school.mod.Rda", sep=""))
@@ -719,23 +736,24 @@ statescore.palette <- c("#BED75A", "#6EB441", "#E6D2C8", "#C3B4A5", "#E6E6E6", "
 race.palette <- c("#2479F2", "#004CD2", "#A8D9FF", "#82FFFF", "#D2D2D2")
 pie.palette <- c("#D2D2D2", "#2479F2")
 
-for(level in c(2)){
+for(level in c(1,2)){
 
 
 if(level == 1){
 #x <- school.mod$Site_ID
-#x <- c(24)
-x <- c(63)
+#x <- c(12, 67, 89, 99, 138, 163, 168)
+x <- c(15, 33, 72, 102, 105, 161, 165)
 }
 else if(level == 2){
 x <- region.mod$Site_ID
-#x <- c(4)
+x <- c(13)
 }
 
 for(s in x){
   if(level == 1){
   n <- school.mod[school.mod$Site_ID == s,]
-  n <- n$graph_name
+  if(s == 62){n <- "KIPP_Charlotte_School_Level"
+  }else {n <- n$graph_name}
   f <- school.mod[school.mod$Site_ID == s,]
   f$Region_Name <- gsub(" ","_",f$Region_Name)
   f$Region_Name <- gsub(",","",f$Region_Name)
@@ -752,11 +770,20 @@ for(s in x){
   state.rating <- staterating.mod[staterating.mod$School_ID == s,]
   state.rating.label <- state.rating$Rating.System
   state.rating.value <- state.rating$Rating
+  #graph name for export
+  png.name <- school.mod[school.mod$Site_ID == s,]
+  png.name <- png.name$file_name
+  file.name <- paste("S.", png.name, sep = "")
 
   ppf <- school.mod[school.mod$Site_ID== s,]
   ppf <- ppf$Per_Pupil_Revenue
   site.leader <- schoolleader.mod[schoolleader.mod$Site_ID== s,]
-  if(s==46){site.leader <- "Don Applyrs"} else{site.leader <- site.leader$leader_name}
+  if(s==46){site.leader <- "Don Applyrs"
+  } else if(s==102) {site.leader <- "Shirley Appleman"  
+  }else if(s==105) {site.leader <- "Neela Parasnis"
+  }else if(s==72) {site.leader <- "Amber Young Medina"
+  }else if(s==145){site.leader <- "Sarah Beth Greenberg"
+  } else{site.leader <- site.leader$leader_name}
   site.address <- school.mod[school.mod$Site_ID== s,]
   site.address <- site.address$address
   site.url <- school.mod[school.mod$Site_ID== s,]
@@ -785,8 +812,9 @@ for(s in x){
   grad_count <- attainment$grad_count
   matric_print <- attainment$matric_print
   matric_count <- attainment$matric_count
-} else if(level == 2){
+  } else if(level == 2){
   n <- region.mod[region.mod$Site_ID == s,]
+  #change name for Charlotte since the school has the same name
   n <- n$graph_name
   f <- n
   #f$Region_Name <- gsub(",","",f$Region_Name)
@@ -808,6 +836,17 @@ for(s in x){
   retention.site <- retention.site$print
   retention.kipp <- retention.mod[retention.mod$Site_ID ==s & retention.mod$retention_type == "Retained_KIPP",]
   retention.kipp <- retention.kipp$print
+  footnote.1 <- footnotes.region.mod[footnotes.region.mod$School_ID== s & footnotes.region.mod$Footnote_Number == 1,]
+  footnote.1 <- footnote.1$Text
+  footnote.2 <- footnotes.region.mod[footnotes.region.mod$School_ID== s & footnotes.region.mod$Footnote_Number == 2,]
+  footnote.2 <- footnote.2$Text
+  footnote.3 <- footnotes.region.mod[footnotes.region.mod$School_ID== s & footnotes.region.mod$Footnote_Number == 3,]
+  footnote.3 <- footnote.3$Text
+
+  #graph name for export
+  png.name <- region.mod[region.mod$Site_ID == s,]
+  png.name <- png.name$file_name
+  file.name <- paste("R.", png.name, sep = "")
 
   hs_scores <- assessment.region.mod[assessment.region.mod$Region_ID == s,]
   sat_score <- hs_scores$AVG_SAT
@@ -829,10 +868,11 @@ for(s in x){
 attrition.print <- subset(attrition.mod$attrition_print, (attrition.mod$Site_ID== s) & (attrition.mod$Site_Level == level))
 
 #############################################subset growth metrics###################################
+#Hardcode TECH VALLEY's numbers.
 if(level==1){
   if(s==46){
-  growth.Mathematics <- "73%"
-  growth.Reading <- "42%"
+  growth.Mathematics <- "54%"
+  growth.Reading <- "54%"
   }else{
 growth.Mathematics <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID== s) & (growth.mod$Sub_Test_Name == "Mathematics"))
 growth.Reading <- subset(growth.mod$Percent_Met_Growth_Target, (growth.mod$School_ID== s) & (growth.mod$Sub_Test_Name == "Reading"))
@@ -845,9 +885,10 @@ growth.region.Reading.Elementary <- subset(growth.region.mod$Percent_Met_Growth_
 }
 #############################################set quartile plot#######################################
 
+#This reorder function changes the order of distinct values in the quartile data so that the graph is displayed in the correct sequence.
+#Please note that the order here assigns order based on WHEN THE VALUE SHOWS UP. Not on the order you want each level to be.
 #Ideally this would be solved by changing the levels order of the Graph_Label to the alphabetical order of sequence...
 #Fuck it. 
-#Please note that the order here assigns order based on WHEN THE VALUE SHOWS UP. Not on the order you want each level to be.
 ordered_labels <- reorder(unique(quartile.mod$Graph_Label), c(9, 10, 11, 12, 13, 3, 4, 5, 6, 8, 14, 15, 16, 17, 7, 1, 2))
 #calculates vertical position for bar labels
 quartile.graph <- subset(quartile.mod, (Site_ID== s) & (Site_Level==level))
@@ -858,9 +899,11 @@ quartile.graph <- ddply(quartile.graph, .(Graph_Label, Sub_Test_Name), transform
 quartile.graph$pos <- (quartile.graph$pos - quartile.graph$neg)
 quartile.graph$Sub_Test_Name <- factor(quartile.graph$Sub_Test_Name, levels = c("Reading", "Mathematics"))
 
+#remove any values <5.
 quartile.graph$label <- as.character(quartile.graph$label)
 quartile.graph$label[as.integer(quartile.graph$label) < 5] <- ""
 
+#manually set X-axis labels for placement as geometric text.
 x_labels <- subset(ordered_labels, ordered_labels %in% unique(quartile.graph$Graph_Label))
 x_labels <- factor(x_labels)
 
@@ -874,6 +917,7 @@ x_labels <- factor(x_labels)
 q1 <- subset(quartile.graph, quartile %in% c("Percent_Below_25_NPR", "Percent_At_25_Below_50_NPR"))
 q2 <- subset(quartile.graph, quartile %in% c("Percent_At_50_Below_75_NPR", "Percent_At_Above_75_NPR"))
 
+#clean quartile names
 q1$quartile <- q1$quartile <- gsub("_"," ", q1$quartile)
 q2$quartile <- q2$quartile <- gsub("_"," ", q2$quartile)
 
@@ -930,6 +974,8 @@ quartile.plot <- quartile.plot + guides(fill = guide_legend(nrow = 2))
 
 #################################set state score plot################################################
 
+#this block of code calculates and sets the bar labels for the statescore plots. 
+#It is split out this way due to inconsistent ordering methodology between the school and region levels.
 statescore.graph <- subset(statescore.mod, (Site_ID == s) & (Site_Level == level))
 if(level==1){
 statescore.graph <- ddply(statescore.graph, .(grade_label, Subtest_Name, score_level), transform, detail_pos = (((cumsum(score)) - 0.5*score)))
@@ -948,28 +994,19 @@ statescore.graph <- ddply(statescore.graph, .(grade_label, Subtest_Cat_RC_ID, sc
  sublist <- unique(unlist(statescore.graph$Subtest_Cat_RC_ID, use.names = FALSE))
 #This loop creates a plot for each CRT umbrella category.
 for (sub in sublist){
+                      #This block of code subsets data for each school, and sets up inheritance for test order.
                       statescore.graph.loop <- subset(statescore.graph, Subtest_Cat_RC_ID == sub)
                       statescore.graph.loop$grade_label <- as.character(statescore.graph.loop$grade_label)
-
                       statescore.order.loop <- subset(statescore.order, order.value %in% unique(statescore.graph.loop$grade_label))
-                      #statescore.graph.loop$grade_label <- factor(statescore.graph.loop$grade_label)
                       statescore.order.loop$list <- rank(statescore.order.loop$order.lookup)
                       statescore.order.loop <- arrange(statescore.order.loop,list)
                       levels <- as.vector(statescore.order.loop$order.value)
                       statescore.graph.loop$grade_label <- factor(statescore.graph.loop$grade_label, levels=levels)
                       assign(paste("statescore.graph.", sub, sep = ""), statescore.graph.loop)
-                      #grade_labelOrdered <- c(unique(statescore.graph.loop$grade_label_int))
-
-                      #statescore.graph.loop[with(statescore.graph.loop, order(grade_label, as.integer(factor(grade_label_int, grade_labelOrdered)))), ]
-
-                      #statescore.graph.loop$grade_label = reorder(statescore.graph.loop$grade_label_int)
 
                       statescore.graph.loop$label <- ifelse(statescore.graph.loop$Score_Grouping_Cat_ID == 2, "", statescore.graph.loop$label)
 
-                      #statescore.graph$score_stack <- factor(statescore.graph$score_stack)
-                      #statescore.graph$score_stack <- reorder(statescore.graph$score_stack, statescore.graph$order)
-                      #statescore_legend <- levels(statescore.graph$score_stack)
-
+                      #this function inserts line breaks if a state test name is greater than a certain length.
                       label_wrap <- function(width = 100) {
                                                            function(variable, value) {
                                                                                       inter <- lapply(strwrap(as.character(value), width=width, simplify=FALSE), 
@@ -1024,8 +1061,9 @@ for (sub in sublist){
   
 demographics.graph <- subset(demographics.mod, (Site_ID == s) & (Site_Level == level))
 #demographics.table <- subset(demographics.graph, select=-c(Site_ID, Site_Level, Display_Name))
-#split out demographics
+#split out reported demographics
 demographics.table <- demographics.graph[-c(2,1,3,11,13)]
+#transpose data for table placement
 demographics.table <- t(demographics.table)
   
 
@@ -1188,28 +1226,58 @@ sped.plot <- sped.plot + theme(axis.ticks.x = element_blank(),
                                          panel.grid.major = element_blank(),
                                          panel.grid.minor = element_blank())
 
-#
+
 #####################################Knit to HTML Template###########################################
 
-
+while(publishdata_html == 1){
 
 if(level==1){
 knit("C:/Users/mhilton/Documents/GitHub/Report_Generator/HTML/school_template.Rhtml")
-#hatersgonnahate.jpg
+#This is a relic from when I was using the knitToHTML() function instead of base knit().
+#knitToHTML doesn't let you specify an output, so I was renaming and copying the default file once it was cast.
 file.rename(from="C:/Users/mhilton/Documents/GitHub/Report_Generator/R/school_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
 
 }else if(level==2){
 knit("C:/Users/mhilton/Documents/GitHub/Report_Generator/HTML/region_template.Rhtml")
-#hatersgonnahate.jpg
+#This is a relic from when I was using the knitToHTML() function instead of base knit().
+#knitToHTML doesn't let you specify an output, so I was renaming and copying the default file once it was cast.
 file.rename(from="C:/Users/mhilton/Documents/GitHub/Report_Generator/R/region_template.html",to=paste(report.path,"HTML_Reports/",f,"/",n,".html", sep=""))
 }
+
+
+######################################Convert HTML to PDF#############################################
+#set I/O paths
+input <- paste(report.path,"HTML_Reports/",f,"/",n,".html", sep="")
+output <- paste(report.path,"PDF_Reports/",f,"/",n,".pdf", sep="")
+
+#updates Batch file. NOTE: This file needs tp live in the wkhtmltopdf directory on your local machine.
+fileConn<-file("C:/Program Files (x86)/wkhtmltopdf/pdf_send.bat")
+writeLines(paste("wkhtmltopdf -T 0in -B 0in -L 0in -R 0in --page-width 940px --disable-smart-shrinking"," ",input," ",output, sep=""), fileConn)
+close(fileConn)  
+
+#call batch file for command line conversion
+system("C:/Users/mhilton/Documents/GitHub/Report_Generator/BAT/pdf_convert.bat")
+break
+}
+######################################Export Doughnut Charts to PNG#######################################
+while(publishdata_graph == 1){
+graph_path <- paste(graph.path,file.name, "/", sep="")
+ ggsave(filename = paste(graph_path,png.name,"_race_pie.png", sep = ""),plot = race.plot, width=20, height = 20, dpi=300)
+ ggsave(filename = paste(graph_path,png.name,"_frl_pie.png", sep = ""),plot = frl.plot, width=20, height = 20, dpi=300)
+ ggsave(filename = paste(graph_path,png.name,"_attrition_pie.png", sep = ""),plot = attrition.plot, width=20, height = 20, dpi=300)
+ ggsave(filename = paste(graph_path,png.name,"_sped_pie.png", sep=""),plot = sped.plot, width=20, height = 20, dpi=300)
+break
+}
+
+######################################Cleanup Detritus####################################################
 #I am a terrible programmer. -MH  
+#This removes variables from the global environment, so that (for example) subject tests don't get applied to the next school in sequence. 
+#Converting the graphing code to a function would eliminate a lot of the need for this. I need to be more measured with my use of the global space.
 if(!exists("statescore.graph.1")) {cat()} else if(nrow(statescore.graph.1) > 0) {rm(statescore.graph.1)} else {cat()}
 if(!exists("statescore.graph.2")) {cat()} else if(nrow(statescore.graph.2) > 0) {rm(statescore.graph.2)} else {cat()}
 if(!exists("statescore.graph.3")) {cat()} else if(nrow(statescore.graph.3) > 0) {rm(statescore.graph.3)} else {cat()}
 if(!exists("statescore.graph.4")) {cat()} else if(nrow(statescore.graph.4) > 0) {rm(statescore.graph.4)} else {cat()}
 if(!exists("statescore.graph.5")) {cat()} else if(nrow(statescore.graph.5) > 0) {rm(statescore.graph.5)} else {cat()}
-if(!exists("gradeOrdered")) {cat()} else {rm(gradeOrdered)}
 if(!exists("footnote.1")) {cat()} else {rm(footnote.1)}
 if(!exists("footnote.2")) {cat()} else {rm(footnote.2)}
 if(!exists("footnote.3")) {cat()} else {rm(footnote.3)}
@@ -1226,18 +1294,6 @@ if(!exists("ap_count1")) {cat()} else {rm(ap_count1)}
 if(!exists("ap_pct2")) {cat()} else {rm(ap_pct2)}
 if(!exists("ap_count2")) {cat()} else {rm(ap_count2)}
 
-######################################Convert HTML to PDF#############################################
-#set I/O variables
-input <- paste(report.path,"HTML_Reports/",f,"/",n,".html", sep="")
-output <- paste(report.path,"PDF_Reports/",f,"/",n,".pdf", sep="")
-
-#updates Batch file. NOTE: This file lives in the wkhtmltopdf directory.
-fileConn<-file("C:/Program Files (x86)/wkhtmltopdf/pdf_send.bat")
-writeLines(paste("wkhtmltopdf -T 0in -B 0in -L 0in -R 0in --page-width 940px --disable-smart-shrinking"," ",input," ",output, sep=""), fileConn)
-close(fileConn)  
-
-#call batch file for command line conversion
-system("C:/Users/mhilton/Documents/GitHub/Report_Generator/BAT/pdf_convert.bat")
 }
 }
 break

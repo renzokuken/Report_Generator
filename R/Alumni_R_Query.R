@@ -595,8 +595,8 @@ INTO #tt_AP_stage
 FROM #tt_HS_Assessment
 WHERE AP__c IS NOT NULL
 AND RecordTypeId = '01280000000LonYAAS'
-GROUP BY Contact__c
-,AP__c
+--GROUP BY Contact__c
+--,AP__c
 ")
 
 agg18 <- ("SELECT 

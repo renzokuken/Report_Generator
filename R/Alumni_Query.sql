@@ -1,7 +1,11 @@
--- This program creates all the calculations for the attainment update.
--- Last modified 11-181-13
+/*
+############################################################
+#Project: Automated Alumni Pull                            #
+#Written By: Mike Hilton                                   # 
+#Last Updated: 12-3-13                                     #
+############################################################
+*/
 
---Create region lookup to crosswalk datasets.
 USE Attainment
 GO
 
@@ -10,12 +14,12 @@ CREATE TABLE #tt_Region_Lookup (
 	,Salesforce_ID VARCHAR(255)
 	,Region_Name VARCHAR(255)
 )
+
 CREATE TABLE #tt_HS_Lookup (
 	School_ID INT
 	,School_Name VARCHAR(255)
-
 )
-	
+
 /********Create Regional Lookup Table************/
 --Need to see if there's an easier way to do this...-MH
 
@@ -49,7 +53,7 @@ INSERT INTO #tt_Region_Lookup (Region_ID, Salesforce_ID, Region_Name)
 		,(4600,'0018000000etIDRAA2','KIPP Albany')
 		,(7500,'0018000000etIHGAA2','KIPP Minneapolis')
 		,(17,'0018000000etIH9AAM','KIPP Central Ohio')
-		
+
 INSERT INTO #tt_HS_Lookup (School_ID, School_Name)		
   VALUES (67,'KIPP Austin Collegiate')
 		,(90,'KIPP DC: College Preparatory')
@@ -63,7 +67,7 @@ INSERT INTO #tt_HS_Lookup (School_ID, School_Name)
 		,(73,'KIPP San Jose Collegiate')
 		,(81,'KIPP University Prep High School')
 		,(63,'Newark Collegiate Academy, a KIPP school')
-  
+
 /*****************Pull in most HS Grad Indicator**********/
   SELECT E.Student__c as Id
 	  ,School__c
@@ -79,7 +83,7 @@ INSERT INTO #tt_HS_Lookup (School_ID, School_Name)
 		OR Pursuing_Degree_Type__c = 'High School Diploma'
 		OR Pursuing_Degree_Type__c ='GED')
 	AND IsDeleted = 0
-	
+
 /*******Pulls in Middle School Completers********/
 SELECT C.Id
 	,L.Region_ID
@@ -108,7 +112,7 @@ SELECT C.Id
 	AND E.Status__c = 'Graduated'
 	AND C.OwnerId <> '00580000003U34WAAS'
 	AND E.IsDeleted = 0
- 
+
 /*****************Pull in most recent HS enrollment**********/
     SELECT
 		 E.Student__c
@@ -136,7 +140,7 @@ SELECT C.Id
 	AND E.Student__c = T.Student__c
   WHERE Status__c NOT IN  ('Withdrawn', 'Transferred Out')
 	AND E.IsDeleted = 0
-	AND Type__c = 'High School'
+	AND Type__c IN ('High School', 'Alternative Program')
 
  /***************Pulls in 9th Grade Starters*******************/
   
@@ -175,8 +179,6 @@ SELECT C.Id
   SELECT Id --Removes all students previously identified as 8th grade completers.
 	FROM #tt_8th_Grade_Cohort
   ) 
-  
-
 
   /****************Join in 8th Grade Alum High School Data*********/
   
@@ -209,7 +211,7 @@ SELECT C.Id
   LEFT JOIN #tt_HS_Grad HG
 	ON HG.Id = G.Id
   WHERE G.KIPP_HS_Class__c <= 2014
-		
+
 /***************Create Union Table of Alumni Types************************/
 
 SELECT * 
@@ -268,12 +270,6 @@ SELECT *
     WHERE KIPP_HS_Class__c <= 2014
   ) AS A
 
-
-
---------------------------------------------
---Matric (#5)
---------------------------------------------
-
 -- Determine 1st Date to College
 SELECT
    Al.Id
@@ -324,7 +320,7 @@ SELECT
 	AND (E.Pursuing_Degree_Type__c  NOT IN ('Certificate', 'High School Diploma', 'GED') OR E.Pursuing_Degree_Type__c is NULL)
  AND A.RecordTypeId = '01280000000BQEkAAO'
  AND E.IsDeleted = 0
- 
+
 /*****************Pull in College Grad Indicator**********/
   SELECT
 	  E.Student__c as Id
@@ -339,7 +335,7 @@ SELECT
   WHERE Status__c = 'Graduated'
 	AND Type__c = 'College' 
 		AND( Pursuing_Degree_Type__c like '%Bachelor%'
-		OR Pursuing_Degree_Type__c like '%Associate%')  -- the "'" is bachelor's or associate's is messing me up so using like
+		OR Pursuing_Degree_Type__c like '%Associate%') 
 	AND IsDeleted = 0
 
 /****************  Determine students getting advanced degrees *******/
@@ -386,7 +382,7 @@ SELECT
 			,'JD'
 			,'Ph.D'
 			, 'Ed.D') OR Pursuing_Degree_Type__c is NULL)
-	 
+
 SELECT
   A.Id
  ,ROW_NUMBER() OVER(PARTITION BY A.Id ORDER BY A.Id) AS Row_Count
@@ -437,9 +433,8 @@ LEFT JOIN #tt_Adv_Degree Adv
     ON Adv.ID = A.id
 LEFT JOIN #tt_Persist P
 	ON P.Id = A.Id
-	
---SELECT * FROM #tt_Attain_Update
 
+SELECT * FROM #tt_Attain_Update
 
 /********Aggregate Regional Attainment Number********/
 SELECT Region_ID
@@ -453,11 +448,12 @@ SELECT Region_ID
 FROM  #tt_Attain_Update
 WHERE Row_Count = 1
 AND Alumni_Type = '8th Grade Completer'
-AND KIPP_HS_Class__c <= 2013
+AND KIPP_HS_Class__c <= 2012
+AND Region_ID IS NOT NULL
 
 GROUP BY Region_ID
 		,Region_Name
-		
+
 /**************Aggregate High School Assessment numbers***************/
 SELECT Id
 	,Row_Count
@@ -490,7 +486,7 @@ SELECT Id
 	,Adv_Degree_Name
 INTO #tt_High_School_RC
 FROM #tt_Attain_Update
-WHERE YEAR(HS_Grad_Date) = 2013)
+WHERE (YEAR(HS_Grad_Date) = 2013)
 AND KIPP_HS = 1
 AND HS_GRAD = 1
 
@@ -539,24 +535,35 @@ FROM #tt_HS_Assessment
 WHERE Overall_Score__c IS NOT NULL
 AND RecordTypeId = '01280000000BQ2ZAAW'
 GROUP BY Contact__c
+
 --ACT
 SELECT Contact__c
 	,COUNT(ACT_Composite__c) AS N_Test
 	,MAX(ACT_Composite__c) AS ACT_Score
 INTO #tt_ACT
 FROM #tt_HS_Assessment
-WHERE ACT_Composite__c IS NOT NULL AND ACT_Composite__c <> 0
+WHERE ACT_Composite__c IS NOT NULL  AND ACT_Composite__c <> 0
 AND RecordTypeId = '01280000000BQ2UAAW'
 GROUP BY Contact__c
+
 --AP
 SELECT Contact__c
-	,COUNT(AP__c) AS N_Test
-	,MAX(AP__c) AS Highest_AP
-	,CASE WHEN MAX(AP__c) >= 3 THEN 1 ELSE 0 END AS Passing_AP
-INTO #tt_AP
+	,AP__c
+	,CASE WHEN AP__c >= 3 THEN 1 ELSE 0 END AS Passing_AP
+INTO #tt_AP_stage
 FROM #tt_HS_Assessment
 WHERE AP__c IS NOT NULL
 AND RecordTypeId = '01280000000LonYAAS'
+--GROUP BY Contact__c
+--,AP__c
+SELECT 
+	 Contact__c
+	,COUNT(AP__c) AS N_Test
+	,MAX(AP__c) AS Highest_AP
+	,CASE WHEN SUM(Passing_AP) >= 1 THEN 1 ELSE 0 END AS Passing_AP
+	,CASE WHEN SUM(Passing_AP) >= 2 THEN 1 ELSE 0 END AS Passing_AP_2
+INTO #tt_AP
+FROM #tt_AP_stage
 GROUP BY Contact__c
 
 --SELECT * FROM #tt_SAT S
@@ -564,7 +571,6 @@ GROUP BY Contact__c
 --ON S.Contact__c = H.Id
 --WHERE H.Region_ID = 11
 --SELECT * FROM #tt_ACT
---WHERE Contact__c = '003C000001Oi2yrIAB'
 --JOIN #tt_High_School_RC H
 --ON S.Contact__c = H.Id
 --WHERE H.Region_ID = 11
@@ -608,6 +614,7 @@ SELECT Id
 	,CASE WHEN A.ACT_Score = 0 THEN NULL ELSE A.ACT_Score END AS ACT_Score
 	,P.Highest_AP
 	,P.Passing_AP
+	,P.Passing_AP_2
 INTO #tt_Score_Join
 FROM #tt_High_School_RC H
 LEFT JOIN #tt_SAT S
@@ -617,8 +624,9 @@ ON H.Id = A.Contact__c
 LEFT JOIN #tt_AP P
 ON H.Id = P.Contact__c
 
-SELECT * FROM #tt_Score_Join
---WHERE Region_ID = 2
+--SELECT * FROM #tt_Score_Join
+--WHERE Region_ID = 11
+
 /************Aggregate HS Assessment Results**************/
 SELECT Region_ID
 	,Region_Name
@@ -629,7 +637,9 @@ SELECT Region_ID
 	,AVG(ACT_Score) AS AVG_ACT
 	,COUNT(Highest_AP) AS N_AP
 	,CAST(SUM(Passing_AP) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP
+	,CAST(SUM(Passing_AP_2) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP_2
 FROM #tt_Score_Join
+WHERE Region_ID <> 15 AND Region_ID <> 10
 GROUP BY Region_ID
 		,Region_Name
 ORDER BY Region_ID
@@ -642,20 +652,20 @@ SELECT School_ID
 	,COUNT(ACT_Score) AS N_ACT
 	,AVG(ACT_Score) AS AVG_ACT
 	,COUNT(Highest_AP) AS N_AP
-	,SUM(Passing_AP) AS N_Passing_AP
 	,CAST(SUM(Passing_AP) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP
+	,CAST(SUM(Passing_AP_2) / (COUNT(Highest_AP) + 0.0) AS DEC(5,2)) AS Passing_AP_2
 FROM #tt_Score_Join S
 JOIN #tt_HS_Lookup H
 ON S.HS_Name = H.School_Name
+WHERE School_ID <> 104 AND School_ID <> 118
 GROUP BY School_ID
 		,School_Name
 ORDER BY School_ID
 
-
 DROP TABLE #tt_Region_Lookup
 DROP TABLE #tt_HS_Lookup
-DROP TABLE #tt_8th_Grade_Cohort	
-DROP TABLE #tt_9th_Grade_Starters	
+DROP TABLE #tt_8th_Grade_Cohort
+DROP TABLE #tt_9th_Grade_Starters
 DROP TABLE #tt_All_Alums 
 DROP TABLE #tt_Max_HS_Enrollment
 DROP TABLE #tt_8th_Grade_Mod
@@ -670,5 +680,6 @@ DROP TABLE #tt_High_School_RC
 DROP TABLE #tt_HS_Assessment
 DROP TABLE #tt_SAT
 DROP TABLE #tt_ACT
+DROP TABLE #tt_AP_stage
 DROP TABLE #tt_AP
 DROP TABLE #tt_Score_Join
