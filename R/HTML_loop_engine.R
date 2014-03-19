@@ -742,11 +742,11 @@ for(level in c(1,2)){
 if(level == 1){
 #x <- school.mod$Site_ID
 #x <- c(12, 67, 89, 99, 138, 163, 168)
-x <- c(15, 33, 72, 102, 105, 161, 165)
+x <- c(25, 42, 49, 59, 83, 90, 91, 103, 142, 170)
 }
 else if(level == 2){
 x <- region.mod$Site_ID
-x <- c(13)
+x <- c(6)
 }
 
 for(s in x){
@@ -1163,12 +1163,11 @@ attrition.graph$ymax <- cumsum(attrition.graph$fraction)
 attrition.graph$ymin <- c(0, head(attrition.graph$ymax, n=-1))
 #begin ggplot
 attrition.plot <- ggplot(attrition.graph, aes(fill=bucket, ymax=ymax, ymin=ymin, xmax=4, xmin=3))
-attrition.plot <- attrition.plot + geom_text(data=NULL, x = 0, y = 0, label = attrition.print, colour="#333333", size = 42)
 attrition.plot <- attrition.plot + scale_fill_manual(values = pie.palette, breaks=c("Attrition_Rate", "anti"))
 attrition.plot <- attrition.plot + geom_rect()
-attrition.plot <- attrition.plot + coord_polar(theta="y")
+attrition.plot <- attrition.plot + coord_polar(theta = "y")
 attrition.plot <- attrition.plot + xlim(c(0, 4))
-attrition.plot <- attrition.plot + ggtitle("Attrition")
+attrition.plot <- attrition.plot + ggtitle("Attrition Rate")
 attrition.plot <- attrition.plot + theme(axis.ticks.x = element_blank(),
                                          axis.text.x = element_blank(),
                                          axis.text = element_blank(),
@@ -1186,6 +1185,8 @@ attrition.plot <- attrition.plot + theme(axis.ticks.x = element_blank(),
                                          panel.grid.major = element_blank(),
                                          panel.grid.minor = element_blank(),
                                          strip.text = element_blank())
+attrition.plot <- attrition.plot + geom_text(data=NULL, x = 0, y = 0, label = attrition.print, colour="#333333", size = 42)
+#attrition.plot <- attrition.plot + geom_text(data=NULL, x = 0, y = 0, vjust=4.2, colour = "#333333", size = 20, label = "Attrition Rate")
 
 #SPED Graph
 sped.graph <- subset(demographics.graph, select=c("Percent Special Needs"))
@@ -1262,10 +1263,10 @@ break
 ######################################Export Doughnut Charts to PNG#######################################
 while(publishdata_graph == 1){
 graph_path <- paste(graph.path,file.name, "/", sep="")
- ggsave(filename = paste(graph_path,png.name,"_race_pie.png", sep = ""),plot = race.plot, width=20, height = 20, dpi=300)
- ggsave(filename = paste(graph_path,png.name,"_frl_pie.png", sep = ""),plot = frl.plot, width=20, height = 20, dpi=300)
+ #ggsave(filename = paste(graph_path,png.name,"_race_pie.png", sep = ""),plot = race.plot, width=20, height = 20, dpi=300)
+ #ggsave(filename = paste(graph_path,png.name,"_frl_pie.png", sep = ""),plot = frl.plot, width=20, height = 20, dpi=300)
  ggsave(filename = paste(graph_path,png.name,"_attrition_pie.png", sep = ""),plot = attrition.plot, width=20, height = 20, dpi=300)
- ggsave(filename = paste(graph_path,png.name,"_sped_pie.png", sep=""),plot = sped.plot, width=20, height = 20, dpi=300)
+ #ggsave(filename = paste(graph_path,png.name,"_sped_pie.png", sep=""),plot = sped.plot, width=20, height = 20, dpi=300)
 break
 }
 

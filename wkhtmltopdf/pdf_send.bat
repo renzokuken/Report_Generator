@@ -1,0 +1,1 @@
+wkhtmltopdf -T 0in -B 0in -L 0in -R 0in --page-width 940px --disable-smart-shrinking Z:/001_NEW_SNEETCH/Report_Card/2013/Output/Print/HTML_Reports/KIPP_DC/KIPP_DC_College_Preparatory.html Z:/001_NEW_SNEETCH/Report_Card/2013/Output/Print/PDF_Reports/KIPP_DC/KIPP_DC_College_Preparatory.pdf
